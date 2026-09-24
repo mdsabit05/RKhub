@@ -1,0 +1,37 @@
+import "dotenv/config";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { query } from "./db.js";
+import resources from "./routes/resources.js";
+import { serveStatic } from "@hono/node-server/serve-static";
+
+const app = new Hono();
+
+app.use("*", cors({
+  origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+}));
+app.use(
+  "/pdfs/*",
+  serveStatic({
+    root: "./public",
+  })
+);
+
+app.get("/", (c) => c.json({
+  name: "RKhub API",
+  version: "1.0.0",
+  message: "College academic resource backend",
+}));
+
+app.get("/health", async (c) => {
+  try {
+    await query("SELECT 1");
+    return c.json({ ok: true, database: "connected" });
+  } catch {
+    return c.json({ ok: false, database: "unavailable" }, 503);
+  }
+});
+
+app.route("/api/resources", resources);
+
+export default app;
