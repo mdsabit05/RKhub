@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "db:init": "psql \"$DATABASE_URL\" -f sql/schema.sql",
-    "db:seed": "psql \"$DATABASE_URL\" -f sql/seed.sql"
+    "db:seed": "psql \"$DATABASE_URL\" -f sql/seed.sql",
+    "test": "tsx test-e2e.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.17",

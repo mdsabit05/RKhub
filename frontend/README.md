@@ -13,24 +13,52 @@ npm run dev
 Default API:
 `http://localhost:8787`
 
-If the backend uses another URL, set:
+If the backend uses another URL:
 
 ```env
 VITE_API_URL=http://localhost:8787
 ```
 
-## Connected resource flows
+## Resource flows
 
-Notes:
-`Year → Course → Semester → Subject → Unit → PDF`
+```
+Notes:     Year → Course → Semester → Subject → Unit → PDF
+PYQs:      Year → Course → Semester → Subject → Unit → PDF
+Syllabus:  Year → Course → Semester → Subject → PDF
+Reference: Year → Course → Semester → Subject → Unit → materials/links
+```
 
-PYQs:
-`Year → Course → Semester → Subject → Unit → PDF`
+## AI Assistant
 
-Syllabus:
-`Year → Course → Semester → Subject → PDF`
+The home page includes a natural language AI composer. Queries are sent to
+`POST /api/ai/chat` and return found resources or exam predictions.
 
-Reference:
-`Year → Course → Semester → Subject → Unit → materials/links`
+## Admin portal
 
-The frontend no longer uses hardcoded curriculum data for these pages. It loads years, courses, semesters, subjects, units and resources from the backend API.
+The `/admin` page is protected by a passcode gate. The key is verified against
+`POST /api/admin/verify`. The session key is stored in `sessionStorage` for the
+browser tab only and cleared on logout or tab close.
+
+## Structure
+
+```
+src/
+├── App.jsx               # Top-level router
+├── main.jsx              # React root
+├── api.js                # Typed fetch client
+├── components/           # Reusable UI components
+│   ├── Header.jsx
+│   ├── Footer.jsx
+│   ├── AiComposer.jsx
+│   ├── Choice.jsx
+│   ├── Document.jsx
+│   ├── Materials.jsx
+│   ├── Selection.jsx
+│   └── SubjectList.jsx
+├── pages/                # Full route pages
+│   ├── Home.jsx
+│   ├── ResourcePage.jsx
+│   └── AdminPage.jsx
+└── constants/
+    └── resources.js      # Resource metadata + tones
+```

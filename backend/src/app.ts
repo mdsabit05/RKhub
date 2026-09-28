@@ -2,6 +2,8 @@ import "dotenv/config";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { query } from "./db.js";
+import ai from "./routes/ai.js";
+import admin from "./routes/admin.js";
 import resources from "./routes/resources.js";
 import { serveStatic } from "@hono/node-server/serve-static";
 
@@ -33,5 +35,7 @@ app.get("/health", async (c) => {
 });
 
 app.route("/api/resources", resources);
+app.route("/api/ai", ai);
+app.route("/api/admin", admin);
 
 export default app;

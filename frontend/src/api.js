@@ -1,7 +1,7 @@
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8787").replace(/\/$/, "");
 
-async function request(path) {
-  const response = await fetch(`${API_URL}${path}`);
+async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, options);
   let data = null;
   try {
     data = await response.json();
@@ -31,6 +31,24 @@ export const api = {
     request(`/api/resources/resolve?${params({ type, ...filters })}`),
   list: (type, filters) =>
     request(`/api/resources/list?${params({ type, ...filters })}`),
+  verifyAdmin: (key) =>
+    request("/api/admin/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key }),
+    }),
+  uploadResource: (formData, adminKey) =>
+    request("/api/resources/upload", {
+      method: "POST",
+      headers: adminKey ? { "x-admin-key": adminKey } : {},
+      body: formData,
+    }),
+  chat: (message, context = {}) =>
+    request("/api/ai/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, context }),
+    }),
 };
 
 export { API_URL };
