@@ -3,10 +3,11 @@ import { api } from "./api";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { AdminPage } from "./pages/AdminPage";
+import { AuthPage } from "./pages/AuthPage";
 import { Home } from "./pages/Home";
 import { ResourcePage } from "./pages/ResourcePage";
 
-export function App() {
+export function App({ hasClerkKey }) {
   const [page, setPage] = useState("home");
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -64,7 +65,13 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <Header page={page} menu={menu} setMenu={setMenu} go={go} />
+      <Header
+        page={page}
+        menu={menu}
+        setMenu={setMenu}
+        go={go}
+        hasClerkKey={hasClerkKey}
+      />
       {page === "home" ? (
         <Home
           prompt={prompt}
@@ -76,6 +83,8 @@ export function App() {
         />
       ) : page === "admin" ? (
         <AdminPage go={go} />
+      ) : page === "login" || page === "register" ? (
+        <AuthPage mode={page} go={go} hasClerkKey={hasClerkKey} />
       ) : (
         <ResourcePage type={page} go={go} />
       )}

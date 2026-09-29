@@ -874,6 +874,15 @@ button {
     top: calc(100% + 6px);
   }
 
+  .mobile-auth-links {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px solid var(--line);
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
   /* HERO */
   .hero {
     padding: 24px 16px 20px;
