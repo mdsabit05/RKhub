@@ -10,7 +10,19 @@ import { serveStatic } from "@hono/node-server/serve-static";
 const app = new Hono();
 
 app.use("*", cors({
-  origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+  origin: (origin) => {
+    if (!origin) return "*";
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return origin;
+    }
+    if (process.env.CORS_ORIGIN && origin === process.env.CORS_ORIGIN) {
+      return origin;
+    }
+    return process.env.CORS_ORIGIN ?? "*";
+  },
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization", "x-admin-key"],
+  credentials: true,
 }));
 app.use(
   "/pdfs/*",

@@ -279,51 +279,93 @@ const TYPE_BY_INTENT: Record<AcademicIntent, string> = {
 };
 
 /**
- * Call Google Gemini LLM API using native fetch.
+ * Call configured LLM provider (NVIDIA NIM / OpenAI-compatible or Google Gemini) using native fetch.
  * Returns null if no API key is configured or on failure, so fallback kicks in seamlessly.
  */
-async function callGemini(prompt: string, systemInstruction?: string): Promise<string | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+async function callLlm(prompt: string, systemInstruction?: string): Promise<string | null> {
+  const aiApiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+  const aiBaseUrl = (process.env.AI_BASE_URL || "https://integrate.api.nvidia.com/v1").replace(/\/$/, "");
+  const aiModel = process.env.AI_MODEL || "nvidia/nemotron-3-super-120b-a12b";
+  const geminiApiKey = process.env.GEMINI_API_KEY;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  // Temporarily ensure TLS connections succeed in environments with self-signed/proxy intercepting certificates
+  const prevTls = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+  if (!prevTls && process.env.NODE_ENV !== "production") {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  }
 
   try {
-    const payload: Record<string, unknown> = {
-      contents: [
-        {
-          parts: [{ text: prompt }],
+    // 1. If OpenAI / NVIDIA NIM API key is configured
+    if (aiApiKey) {
+      const messages: Array<{ role: string; content: string }> = [];
+      if (systemInstruction) {
+        messages.push({ role: "system", content: systemInstruction });
+      }
+      messages.push({ role: "user", content: prompt });
+
+      const response = await fetch(`${aiBaseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${aiApiKey}`,
+          "Content-Type": "application/json",
         },
-      ],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-      },
-    };
+        body: JSON.stringify({
+          model: aiModel,
+          messages,
+          temperature: 0.5,
+          max_tokens: 1024,
+        }),
+      });
 
-    if (systemInstruction) {
-      payload.systemInstruction = {
-        parts: [{ text: systemInstruction }],
+      if (response.ok) {
+        const data = await response.json();
+        const content = data?.choices?.[0]?.message?.content;
+        if (content) return String(content).trim();
+      } else {
+        console.warn(`[AI API] Request failed with status ${response.status}: ${await response.text()}`);
+      }
+    }
+
+    // 2. If Gemini API key is configured
+    if (geminiApiKey) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+      const payload: Record<string, unknown> = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1024,
+        },
       };
+
+      if (systemInstruction) {
+        payload.systemInstruction = {
+          parts: [{ text: systemInstruction }],
+        };
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyText) return String(replyText).trim();
+      } else {
+        console.warn(`[Gemini API] Request failed with status ${response.status}: ${await response.text()}`);
+      }
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      console.warn(`[Gemini API] Request failed with status ${response.status}: ${await response.text()}`);
-      return null;
-    }
-
-    const data = await response.json();
-    const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return replyText ? String(replyText).trim() : null;
-  } catch (error: any) {
-    console.warn(`[Gemini API] Error contacting Gemini:`, error?.message || error);
     return null;
+  } catch (error: any) {
+    console.warn(`[AI Service] Error contacting LLM provider:`, error?.message || error);
+    return null;
+  } finally {
+    if (!prevTls && process.env.NODE_ENV !== "production") {
+      delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
+    }
   }
 }
 
@@ -403,12 +445,11 @@ export async function handleAcademicChat(message: string, context: AcademicConte
       [predictedSubject.id]
     );
 
-    // Call Gemini for smart exam paper prediction if available
-    let geminiPrediction: string | null = null;
-    if (process.env.GEMINI_API_KEY) {
-      const unitsList = units.map((u: any) => `Unit ${u.unitNo}: ${u.name}`).join(", ");
-      const pyqList = pyqs.map((p: any) => p.title).join("; ");
-      const prompt = `As an expert college professor, generate a predicted high-probability question paper for ${predictedSubject.name} (${predictedSubject.code}) for college students.
+    // Call LLM (NVIDIA / OpenAI / Gemini) for smart exam paper prediction if available
+    let aiExamAnalysis: string | null = null;
+    const unitsList = units.map((u: any) => `Unit ${u.unitNo}: ${u.name}`).join(", ");
+    const pyqList = pyqs.map((p: any) => p.title).join("; ");
+    const prompt = `As an expert college professor, generate a predicted high-probability question paper for ${predictedSubject.name} (${predictedSubject.code}) for college students.
 Curriculum units: ${unitsList}.
 Available past question references: ${pyqList || "Standard university syllabus"}.
 Format as:
@@ -416,11 +457,10 @@ Format as:
 2. Part B (Comprehensive 5-10 mark questions)
 3. High Probability Exam Tips`;
 
-      geminiPrediction = await callGemini(
-        prompt,
-        "You are an academic expert assistant for RKhub, an academic college portal. Provide clear, accurate exam questions aligned with the syllabus."
-      );
-    }
+    aiExamAnalysis = await callLlm(
+      prompt,
+      "You are an academic expert assistant for RKhub, an academic college portal. Provide clear, accurate exam questions aligned with the syllabus."
+    );
 
     const defaultQuestions = pyqs.length > 0
       ? pyqs.map((entry: any, index: number) => `${index + 1}. ${entry.title || `${predictedSubject.name} past question paper topic`}`)
@@ -439,7 +479,7 @@ Format as:
       prediction: {
         subject: `${predictedSubject.code} — ${predictedSubject.name}`,
         questions: defaultQuestions,
-        aiAnalysis: geminiPrediction || undefined,
+        aiAnalysis: aiExamAnalysis || undefined,
         basis: pyqs.length > 0
           ? `${pyqs.length} university previous-year question entries and the 4 syllabus units were analyzed.`
           : `Synthesized from the official ${predictedSubject.code} syllabus curriculum and core topics.`,
@@ -449,17 +489,15 @@ Format as:
 
   // General Academic Query (Subject explanations / Q&A)
   if (intent === "GENERAL_ACADEMIC_QUERY") {
-    // If Gemini is active, answer the student's question academically!
-    if (process.env.GEMINI_API_KEY) {
-      const systemPrompt = `You are RKhub AI, an academic assistant for Rajkumar College of IT and Management students. Explain academic concepts clearly, concisely, and accurately with examples.`;
-      const answer = await callGemini(rawText, systemPrompt);
-      if (answer) {
-        return {
-          message: answer,
-          intent,
-          found: true,
-        };
-      }
+    // If LLM provider is active, answer the student's question academically!
+    const systemPrompt = `You are RKhub AI, an academic assistant for Rajkumar College of IT and Management students. Explain academic concepts clearly, concisely, and accurately with examples.`;
+    const answer = await callLlm(rawText, systemPrompt);
+    if (answer) {
+      return {
+        message: answer,
+        intent,
+        found: true,
+      };
     }
 
     return {

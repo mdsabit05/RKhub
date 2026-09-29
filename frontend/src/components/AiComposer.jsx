@@ -1,27 +1,8 @@
 import React from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  ExternalLink,
-  FileText,
-  GraduationCap,
-  Paperclip,
-  Search,
-  Send,
-  Sparkles,
-} from "lucide-react";
+import { ExternalLink, Paperclip, Send, Sparkles } from "lucide-react";
 import { API_URL } from "../api";
-import { tones } from "../constants/resources";
 
 export function AiComposer({ prompt, setPrompt, notice, submit, go, aiResult }) {
-  const suggestions = [
-    ["Give me BCA 2nd year DBMS Unit 1 notes", "notes"],
-    ["Find the 2025 DBMS PYQ", "pyq"],
-    ["Show me BCA 2nd year DBMS syllabus", "syllabus"],
-    ["Give me DBMS Unit 1 reference material", "reference"],
-    ["Predict upcoming BCA 2nd year DBMS question paper", "predict"],
-  ];
-
   return (
     <>
       <div className="ai-composer">
@@ -160,49 +141,6 @@ export function AiComposer({ prompt, setPrompt, notice, submit, go, aiResult }) 
           )}
         </div>
       )}
-
-      <div className="suggestions">
-        <div className="suggestion-label">
-          <Sparkles size={17} />
-          <span>Try asking</span>
-        </div>
-
-        <div className="suggestion-grid">
-          {suggestions.map(([text, target], i) => {
-            const Icon =
-              i === 0
-                ? FileText
-                : i === 1
-                  ? Search
-                  : i === 2
-                    ? GraduationCap
-                    : i === 3
-                      ? BookOpen
-                      : Sparkles;
-
-            return (
-              <button
-                className="suggestion"
-                key={text}
-                onClick={() => {
-                  if (target === "predict") {
-                    setPrompt(text);
-                  } else {
-                    go(target);
-                  }
-                }}
-                type="button"
-              >
-                <span className={`suggestion-icon ${tones[i % tones.length]}`}>
-                  <Icon size={17} />
-                </span>
-                <span className="suggestion-text">{text}</span>
-                <ArrowRight size={17} className="suggestion-arrow" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
     </>
   );
 }
