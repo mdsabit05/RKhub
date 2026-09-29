@@ -44,16 +44,16 @@ export function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const submit = async (customContext = {}) => {
-    if (!prompt.trim() && !customContext.attachmentName) {
-      setNotice("Type what you need or attach context first.");
+  const submit = async () => {
+    if (!prompt.trim()) {
+      setNotice("Type what you need first.");
       return;
     }
 
     setNotice("Searching RKhub resources with AI...");
 
     try {
-      const result = await api.chat(prompt.trim(), customContext);
+      const result = await api.chat(prompt.trim());
       setAiResult(result);
       setNotice(result?.message || "I couldn't find that material in the RKhub college resources.");
     } catch (error) {
