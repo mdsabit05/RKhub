@@ -13,6 +13,8 @@ export type AcademicContext = {
   course?: string | null;
   semester?: number | null;
   subjectId?: number | null;
+  attachmentName?: string | null;
+  attachmentText?: string | null;
 };
 
 const YEAR_PATTERNS: Array<{ regex: RegExp; year: number }> = [
@@ -371,7 +373,7 @@ async function callLlm(prompt: string, systemInstruction?: string): Promise<stri
 
 export async function handleAcademicChat(message: string, context: AcademicContext = {}) {
   const rawText = String(message ?? "").trim();
-  if (!rawText) {
+  if (!rawText && !context.attachmentName && !context.attachmentText) {
     return {
       message: "Type your academic question or what resource you need.",
       intent: "GENERAL_ACADEMIC_QUERY",
@@ -379,11 +381,16 @@ export async function handleAcademicChat(message: string, context: AcademicConte
     };
   }
 
-  const intent = detectIntent(rawText);
-  const unitNo = extractUnitNumber(rawText);
-  const detectedYear = extractYear(rawText);
-  const detectedSem = extractSemester(rawText);
-  const detectedCourse = extractCourse(rawText);
+  // Combine query text with attachment name to extract course/subject/unit clues
+  const textToScan = context.attachmentName
+    ? `${rawText} ${context.attachmentName.replace(/[._-]/g, " ")}`
+    : rawText;
+
+  const intent = detectIntent(textToScan);
+  const unitNo = extractUnitNumber(textToScan);
+  const detectedYear = extractYear(textToScan);
+  const detectedSem = extractSemester(textToScan);
+  const detectedCourse = extractCourse(textToScan);
 
   let year = context.year ?? detectedYear;
   let course = context.course ? String(context.course).toUpperCase() : detectedCourse;
@@ -404,12 +411,12 @@ export async function handleAcademicChat(message: string, context: AcademicConte
   }
 
   if (!subject) {
-    subject = await findSubjectByName(rawText, course, year, semester);
+    subject = await findSubjectByName(textToScan, course, year, semester);
   }
 
   // If still not found and no course/year was specified, search without constraints
   if (!subject && (course || year || semester)) {
-    subject = await findSubjectByName(rawText);
+    subject = await findSubjectByName(textToScan);
   }
 
   // Populate inferred year/course/semester from resolved subject
@@ -490,8 +497,14 @@ Format as:
   // General Academic Query (Subject explanations / Q&A)
   if (intent === "GENERAL_ACADEMIC_QUERY") {
     // If LLM provider is active, answer the student's question academically!
+    const promptWithAttachment = context.attachmentText
+      ? `${rawText || "Please analyze and explain this academic document:"}\n\n[Attached Document: "${context.attachmentName || "Attachment"}"]:\n${context.attachmentText.slice(0, 3500)}`
+      : context.attachmentName
+      ? `${rawText || "Please explain this document"} (Referencing attached document: ${context.attachmentName})`
+      : rawText;
+
     const systemPrompt = `You are RKhub AI, an academic assistant for Rajkumar College of IT and Management students. Explain academic concepts clearly, concisely, and accurately with examples.`;
-    const answer = await callLlm(rawText, systemPrompt);
+    const answer = await callLlm(promptWithAttachment, systemPrompt);
     if (answer) {
       return {
         message: answer,
