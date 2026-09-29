@@ -783,6 +783,32 @@ button {
   font-weight: 800;
 }
 
+/* AUTHENTICATION PAGE LAYOUT */
+.auth-split-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.auth-showcase {
+  padding: 10px 0;
+}
+
+.auth-form-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .auth-split-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
 /* ==========================================================================
    RESPONSIVE BREAKPOINTS (TABLETS & PHONES)
    ========================================================================== */

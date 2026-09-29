@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import { SignIn, SignUp } from "@clerk/clerk-react";
-import { ArrowLeft, CheckCircle2, GraduationCap, Key, Lock, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  CheckCircle2,
+  FileCheck,
+  GraduationCap,
+  Key,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 export function AuthPage({ mode = "login", go, hasClerkKey }) {
   const [keyInput, setKeyInput] = useState("");
@@ -16,214 +25,283 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
     }, 500);
   };
 
+  const clerkAppearance = {
+    variables: {
+      colorPrimary: "#0f766e",
+      colorTextOnPrimaryBackground: "#ffffff",
+      colorText: "#111827",
+      colorTextSecondary: "#64748b",
+      colorBackground: "#ffffff",
+      colorInputBackground: "#f8fafc",
+      colorInputBorder: "#cbd5e1",
+      borderRadius: "12px",
+      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+    },
+    elements: {
+      rootBox: {
+        width: "100%",
+        maxWidth: 440,
+      },
+      card: {
+        boxShadow: "0 10px 30px rgba(16, 24, 40, 0.08)",
+        border: "1px solid #e2e8f0",
+        borderRadius: "18px",
+        padding: "28px 24px",
+      },
+      headerTitle: {
+        fontSize: "22px",
+        fontWeight: 800,
+        color: "#111827",
+      },
+      headerSubtitle: {
+        fontSize: "13.5px",
+        color: "#64748b",
+      },
+      formButtonPrimary: {
+        backgroundColor: "#0f766e",
+        fontWeight: 650,
+        fontSize: "14px",
+        padding: "10px 16px",
+        "&:hover": {
+          backgroundColor: "#0d655f",
+        },
+      },
+      footerActionLink: {
+        color: "#0f766e",
+        fontWeight: 700,
+      },
+    },
+  };
+
   return (
-    <main style={{ maxWidth: 520, margin: "24px auto 60px", padding: "0 16px" }}>
+    <main style={{ maxWidth: 1040, margin: "20px auto 60px", padding: "0 16px" }}>
       <button className="back-link" onClick={() => go("home")} type="button">
         <ArrowLeft size={16} />
         Back to Home
       </button>
 
-      {/* Brand Header */}
-      <div style={{ textAlign: "center", marginBottom: 24, marginTop: 12 }}>
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 14,
-            background: "#edf5ef",
-            display: "inline-grid",
-            placeItems: "center",
-            color: "#0f513f",
-            marginBottom: 10,
-          }}
-        >
-          <GraduationCap size={28} />
-        </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 6px", color: "#111827" }}>
-          {mode === "login" ? "Welcome Back to RKhub" : "Join RKhub College Portal"}
-        </h1>
-        <p style={{ color: "#667085", fontSize: 14, margin: 0 }}>
-          {mode === "login"
-            ? "Sign in to access your notes, PYQs, and academic tools"
-            : "Create an account to save syllabus materials and track exams"}
-        </p>
-
-        {/* Toggle Login / Register */}
-        <div
-          style={{
-            display: "inline-flex",
-            background: "#f1f5f9",
-            padding: 4,
-            borderRadius: 12,
-            marginTop: 18,
-            gap: 4,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => go("login")}
-            style={{
-              padding: "7px 22px",
-              borderRadius: 9,
-              border: 0,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              background: mode === "login" ? "#ffffff" : "transparent",
-              color: mode === "login" ? "#0f513f" : "#64748b",
-              boxShadow: mode === "login" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => go("register")}
-            style={{
-              padding: "7px 22px",
-              borderRadius: 9,
-              border: 0,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              background: mode === "register" ? "#ffffff" : "transparent",
-              color: mode === "register" ? "#0f513f" : "#64748b",
-              boxShadow: mode === "register" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
-            }}
-          >
-            Register
-          </button>
-        </div>
-      </div>
-
-      {/* Render Clerk Component if configured */}
-      {hasClerkKey ? (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          {mode === "login" ? (
-            <SignIn
-              routing="hash"
-              appearance={{
-                elements: {
-                  rootBox: { width: "100%" },
-                  card: { boxShadow: "0 8px 30px rgba(0,0,0,0.08)", borderRadius: 16 },
-                },
-              }}
-            />
-          ) : (
-            <SignUp
-              routing="hash"
-              appearance={{
-                elements: {
-                  rootBox: { width: "100%" },
-                  card: { boxShadow: "0 8px 30px rgba(0,0,0,0.08)", borderRadius: 16 },
-                },
-              }}
-            />
-          )}
-        </div>
-      ) : (
-        /* Setup / Key Prompt Card if VITE_CLERK_PUBLISHABLE_KEY is not yet added */
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: 16,
-            padding: 24,
-            boxShadow: "0 8px 24px rgba(16, 24, 40, 0.05)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontWeight: 700,
-              fontSize: 15,
-              color: "#0f513f",
-              marginBottom: 8,
-            }}
-          >
-            <Key size={18} />
-            Connect Your Clerk Authentication Key
+      <div className="auth-split-layout">
+        {/* Left Column: College Showcase & Benefits */}
+        <div className="auth-showcase">
+          <div className="brand" style={{ marginBottom: 20 }}>
+            <div className="brand-mark">
+              <GraduationCap size={28} />
+            </div>
+            <div>
+              <div className="brand-name">RKhub</div>
+              <div className="brand-subtitle">
+                Rajkumar College of IT and Management
+              </div>
+            </div>
           </div>
-          <p style={{ color: "#475467", fontSize: 13.5, lineHeight: 1.5, margin: "0 0 16px" }}>
-            Clerk powers authentication with Google, GitHub, and Email/Password.
-            To activate sign-in on RKhub, obtain your free key from{" "}
-            <a
-              href="https://dashboard.clerk.com"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "#0f766e", fontWeight: 600 }}
-            >
-              dashboard.clerk.com
-            </a>{" "}
-            and paste it below:
+
+          <h2 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2, margin: "0 0 12px", color: "#111827" }}>
+            {mode === "login"
+              ? "Welcome back to your academic workspace"
+              : "Create your student account to get started"}
+          </h2>
+
+          <p style={{ color: "#64748b", fontSize: 15, lineHeight: 1.5, margin: "0 0 28px" }}>
+            Access verified notes, previous year exam papers, curriculum syllabi, and AI-powered study assistance in one place.
           </p>
 
-          <form onSubmit={handleSaveKey} style={{ display: "grid", gap: 12 }}>
-            <label style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                Clerk Publishable Key (pk_test_...)
-              </span>
-              <input
-                type="text"
-                placeholder="pk_test_..."
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div
                 style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  border: "1px solid #cbd5e1",
-                  fontSize: 14,
-                  outline: "none",
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: "#edf5ef",
+                  color: "#0f513f",
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
                 }}
-              />
-            </label>
+              >
+                <BookOpen size={18} />
+              </div>
+              <div>
+                <strong style={{ fontSize: 14, color: "#111827", display: "block" }}>
+                  Curriculum-Aligned Notes
+                </strong>
+                <span style={{ fontSize: 13, color: "#64748b" }}>
+                  Official semester notes categorized by year, course, and unit.
+                </span>
+              </div>
+            </div>
 
-            {savedKey && (
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: "#fff0df",
+                  color: "#b54708",
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <FileCheck size={18} />
+              </div>
+              <div>
+                <strong style={{ fontSize: 14, color: "#111827", display: "block" }}>
+                  University PYQs & Papers
+                </strong>
+                <span style={{ fontSize: 13, color: "#64748b" }}>
+                  Browse previous years' question papers to prepare for university exams.
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: "#f0e9ff",
+                  color: "#6d28d9",
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <strong style={{ fontSize: 14, color: "#111827", display: "block" }}>
+                  AI Exam Prediction
+                </strong>
+                <span style={{ fontSize: 13, color: "#64748b" }}>
+                  Predict high-probability questions and get instant academic explanations.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 32,
+              padding: "12px 16px",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              fontSize: 12.5,
+              color: "#475467",
+            }}
+          >
+            <ShieldCheck size={18} style={{ color: "#0f766e", flexShrink: 0 }} />
+            <span>Secured with Clerk Authentication • Encrypted & Private</span>
+          </div>
+        </div>
+
+        {/* Right Column: Embedded Clerk Component */}
+        <div className="auth-form-wrapper">
+          {hasClerkKey ? (
+            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+              {mode === "login" ? (
+                <SignIn
+                  routing="hash"
+                  appearance={clerkAppearance}
+                  signUpUrl="#/register"
+                />
+              ) : (
+                <SignUp
+                  routing="hash"
+                  appearance={clerkAppearance}
+                  signInUrl="#/login"
+                />
+              )}
+            </div>
+          ) : (
+            /* Setup Prompt if Key is Missing */
+            <div
+              style={{
+                width: "100%",
+                maxWidth: 440,
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: 18,
+                padding: 26,
+                boxShadow: "0 10px 30px rgba(16, 24, 40, 0.08)",
+              }}
+            >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
-                  color: "#166534",
-                  fontSize: 13,
-                  fontWeight: 600,
+                  gap: 8,
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: "#0f513f",
+                  marginBottom: 8,
                 }}
               >
-                <CheckCircle2 size={16} />
-                Key saved! Reloading application...
+                <Key size={18} />
+                Connect Clerk Authentication
               </div>
-            )}
+              <p style={{ color: "#475467", fontSize: 13.5, lineHeight: 1.5, margin: "0 0 16px" }}>
+                To activate login and registration, paste your Clerk Publishable Key from{" "}
+                <a
+                  href="https://dashboard.clerk.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#0f766e", fontWeight: 600 }}
+                >
+                  dashboard.clerk.com
+                </a>:
+              </p>
 
-            <button
-              className="primary-action"
-              type="submit"
-              style={{ width: "100%", marginTop: 4, cursor: "pointer" }}
-            >
-              <Sparkles size={16} />
-              Enable Clerk Authentication
-            </button>
-          </form>
+              <form onSubmit={handleSaveKey} style={{ display: "grid", gap: 12 }}>
+                <input
+                  type="text"
+                  placeholder="pk_test_..."
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    border: "1px solid #cbd5e1",
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
 
-          <div
-            style={{
-              marginTop: 18,
-              padding: 12,
-              background: "#f8fafc",
-              borderRadius: 10,
-              fontSize: 12,
-              color: "#64748b",
-              lineHeight: 1.5,
-            }}
-          >
-            <strong>Or configure in `.env`:</strong>
-            <pre style={{ margin: "6px 0 0", padding: "6px 8px", background: "#f1f5f9", borderRadius: 6, overflowX: "auto" }}>
-              VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
-            </pre>
-          </div>
+                {savedKey && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      color: "#166534",
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <CheckCircle2 size={16} />
+                    Key saved! Reloading application...
+                  </div>
+                )}
+
+                <button
+                  className="primary-action"
+                  type="submit"
+                  style={{ width: "100%", marginTop: 4, cursor: "pointer" }}
+                >
+                  <Sparkles size={16} />
+                  Enable Clerk Authentication
+                </button>
+              </form>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </main>
   );
 }
