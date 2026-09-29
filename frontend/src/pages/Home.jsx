@@ -56,12 +56,14 @@ export function Home({ prompt, setPrompt, notice, submit, go, aiResult }) {
             type="button"
           >
             <span className={`resource-icon ${tones[i]}`}>
-              <Icon size={28} />
+              <Icon size={26} />
             </span>
-            <h2>{title}</h2>
-            <p>{desc}</p>
+            <div className="resource-card-content">
+              <h2>{title}</h2>
+              <p>{desc}</p>
+            </div>
             <span className={`resource-arrow ${tones[i]}`}>
-              <ArrowRight size={19} />
+              <ArrowRight size={18} />
             </span>
           </button>
         ))}
