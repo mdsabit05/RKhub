@@ -95,8 +95,8 @@ export function Document({ type, year, course, semester, subject, unit, onBack }
   }`;
 
   return (
-    <section className="document-panel" style={{ display: "block" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: 22, alignItems: "center" }}>
+    <section className="document-panel">
+      <div className="document-card-layout">
         <div className="document-preview">
           <FileText size={48} />
           <span>PDF</span>
@@ -210,17 +210,7 @@ export function Document({ type, year, course, semester, subject, unit, onBack }
       </div>
 
       {showUpload && (
-        <form
-          onSubmit={handleUploadSubmit}
-          style={{
-            marginTop: 20,
-            padding: 20,
-            background: "#fff",
-            border: "1px solid #0f766e40",
-            borderRadius: 14,
-            boxShadow: "0 4px 16px rgba(15, 118, 110, 0.08)",
-          }}
-        >
+        <form onSubmit={handleUploadSubmit} className="inline-upload-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div style={{ fontWeight: 700, fontSize: 16, color: "#0f513f", display: "flex", alignItems: "center", gap: 8 }}>
               <Upload size={18} />
@@ -247,7 +237,7 @@ export function Document({ type, year, course, semester, subject, unit, onBack }
                   padding: "10px 14px",
                   borderRadius: 8,
                   border: "1px solid #cbd5e1",
-                  fontSize: 14,
+                  fontSize: 16,
                   outline: "none",
                 }}
               />
@@ -271,7 +261,7 @@ export function Document({ type, year, course, semester, subject, unit, onBack }
 
             {uploadError && <div className="api-error">{uploadError}</div>}
 
-            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <div className="inline-upload-actions">
               <button
                 className="primary-action"
                 type="submit"

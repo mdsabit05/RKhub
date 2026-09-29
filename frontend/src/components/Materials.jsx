@@ -106,17 +106,7 @@ export function Materials({ course, year, semester, subject, unit, resources, lo
       )}
 
       {showUpload && (
-        <form
-          onSubmit={handleUploadSubmit}
-          style={{
-            marginBottom: 20,
-            padding: 20,
-            background: "#fff",
-            border: "1px solid #0f766e40",
-            borderRadius: 14,
-            boxShadow: "0 4px 16px rgba(15, 118, 110, 0.08)",
-          }}
-        >
+        <form onSubmit={handleUploadSubmit} className="inline-upload-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div style={{ fontWeight: 700, fontSize: 16, color: "#0f513f", display: "flex", alignItems: "center", gap: 8 }}>
               <Upload size={18} />
@@ -143,7 +133,7 @@ export function Materials({ course, year, semester, subject, unit, resources, lo
                   padding: "10px 14px",
                   borderRadius: 8,
                   border: "1px solid #cbd5e1",
-                  fontSize: 14,
+                  fontSize: 16,
                   outline: "none",
                 }}
               />
@@ -167,7 +157,7 @@ export function Materials({ course, year, semester, subject, unit, resources, lo
 
             {uploadError && <div className="api-error">{uploadError}</div>}
 
-            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <div className="inline-upload-actions">
               <button
                 className="primary-action"
                 type="submit"
