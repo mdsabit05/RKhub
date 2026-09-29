@@ -37,12 +37,14 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key }),
     }),
-  uploadResource: (formData, adminKey) =>
-    request("/api/resources/upload", {
+  uploadResource: (formData, adminKey) => {
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key") || "rkhub-admin-2026";
+    return request("/api/resources/upload", {
       method: "POST",
-      headers: adminKey ? { "x-admin-key": adminKey } : {},
+      headers: key ? { "x-admin-key": key } : {},
       body: formData,
-    }),
+    });
+  },
   chat: (message, context = {}) =>
     request("/api/ai/chat", {
       method: "POST",

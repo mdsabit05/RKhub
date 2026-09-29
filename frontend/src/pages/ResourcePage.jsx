@@ -152,23 +152,22 @@ export function ResourcePage({ type, go }) {
     };
   }, [subject, type]);
 
-  useEffect(() => {
+  const fetchMaterials = () => {
     if (!subject || !year || !course || !semester || !unit) return;
     if (type !== "reference") return;
 
-    let active = true;
     setLoading(true);
     setError("");
 
     api
       .list("reference", { subjectId: subject.id, unitId: unit.id })
-      .then((data) => active && setResources(data))
-      .catch((err) => active && setError(err.message))
-      .finally(() => active && setLoading(false));
+      .then((data) => setResources(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  };
 
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    fetchMaterials();
   }, [subject, unit, type, year, course, semester]);
 
   const chooseYear = (value) =>
@@ -383,6 +382,7 @@ export function ResourcePage({ type, go }) {
           unit={unit}
           resources={resources}
           loading={loading}
+          onUploaded={fetchMaterials}
         />
       )}
     </main>
