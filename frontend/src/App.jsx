@@ -46,15 +46,17 @@ export function App({ hasClerkKey }) {
   }, []);
 
   const submit = async () => {
-    if (!prompt.trim()) {
+    const query = prompt.trim();
+    if (!query) {
       setNotice("Type what you need first.");
       return;
     }
 
+    setPrompt("");
     setNotice("Searching RKhub resources with AI...");
 
     try {
-      const result = await api.chat(prompt.trim());
+      const result = await api.chat(query);
       setAiResult(result);
       setNotice(result?.message || "I couldn't find that material in the RKhub college resources.");
     } catch (error) {
