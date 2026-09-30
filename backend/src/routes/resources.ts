@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { query } from "../db.js";
 import { storageService } from "../services/storage.service.js";
 import { isValidAdminKey } from "./admin.js";
+import { authenticateUser } from "../auth.js";
 
 const resources = new Hono();
 
@@ -110,6 +111,8 @@ resources.get("/list", async (c) => {
   const type = rawType === "pyqs" ? "pyq" : rawType;
   const subjectId = c.req.query("subjectId");
   const unitId = c.req.query("unitId");
+  const year = c.req.query("year");
+  const semester = c.req.query("semester");
 
   if (!["notes", "pyq", "syllabus", "reference"].includes(type ?? "")) {
     return c.json({ error: "Invalid resource type" }, 400);
@@ -118,17 +121,25 @@ resources.get("/list", async (c) => {
   const params: unknown[] = [type];
   let sql = `
     SELECT r.id, r.title, r.description,
+           r.resource_type AS "resourceType",
            r.file_url AS "fileUrl",
            r.external_url AS "externalUrl",
            r.year_no AS year,
            r.semester_no AS semester,
+           r.uploaded_by AS "uploadedBy",
+           u_auth.name AS "uploaderName",
+           r.file_size AS "fileSize",
+           r.created_at AS "createdAt",
+           s.id AS "subjectId",
            s.code AS "subjectCode",
            s.name AS "subjectName",
+           u.id AS "unitId",
            u.unit_no AS "unitNo",
            u.name AS "unitName"
     FROM resources r
     LEFT JOIN subjects s ON s.id = r.subject_id
     LEFT JOIN units u ON u.id = r.unit_id
+    LEFT JOIN users u_auth ON u_auth.id = r.uploaded_by
     WHERE r.resource_type = $1
   `;
 
@@ -142,8 +153,19 @@ resources.get("/list", async (c) => {
     sql += ` AND r.unit_id = $${params.length}`;
   }
 
-  sql += " ORDER BY r.title";
-  return c.json(await query(sql, params));
+  if (year) {
+    params.push(Number(year));
+    sql += ` AND r.year_no = $${params.length}`;
+  }
+
+  if (semester) {
+    params.push(Number(semester));
+    sql += ` AND r.semester_no = $${params.length}`;
+  }
+
+  sql += " ORDER BY r.created_at DESC, r.id DESC";
+  const rows = await query(sql, params);
+  return c.json({ resources: rows });
 });
 
 resources.get("/resolve", async (c) => {
@@ -167,8 +189,15 @@ resources.get("/resolve", async (c) => {
 
   let sql = `
     SELECT r.id, r.title, r.description,
+           r.resource_type AS "resourceType",
            r.file_url AS "fileUrl",
            r.external_url AS "externalUrl",
+           r.year_no AS year,
+           r.semester_no AS semester,
+           r.uploaded_by AS "uploadedBy",
+           u_auth.name AS "uploaderName",
+           r.file_size AS "fileSize",
+           r.created_at AS "createdAt",
            s.code AS "subjectCode",
            s.name AS "subjectName",
            u.unit_no AS "unitNo",
@@ -177,6 +206,7 @@ resources.get("/resolve", async (c) => {
     JOIN subjects s ON s.id = r.subject_id
     JOIN courses c ON c.id = s.course_id
     LEFT JOIN units u ON u.id = r.unit_id
+    LEFT JOIN users u_auth ON u_auth.id = r.uploaded_by
     WHERE r.resource_type = $1
       AND r.year_no = $2
       AND c.code = $3
@@ -189,21 +219,23 @@ resources.get("/resolve", async (c) => {
     sql += ` AND u.unit_no = $${params.length}`;
   }
 
-  sql += " ORDER BY r.title";
+  sql += " ORDER BY r.created_at DESC, r.id DESC";
   return c.json(await query(sql, params));
 });
-
 
 resources.post("/upload", async (c) => {
   const body = await c.req.parseBody();
 
+  const user = await authenticateUser(c);
+
   const adminKey =
     c.req.header("x-admin-key") ||
-    c.req.header("authorization")?.replace(/^Bearer\s+/i, "") ||
     String(body.adminKey ?? "");
 
-  if (!isValidAdminKey(adminKey)) {
-    return c.json({ error: "Unauthorized: Invalid or missing admin authorization key" }, 401);
+  const hasAdmin = isValidAdminKey(adminKey);
+
+  if (!user && !hasAdmin) {
+    return c.json({ error: "Unauthorized: Please sign in to upload resources." }, 401);
   }
 
   const type = String(body.resourceType ?? body.type ?? "").trim().toLowerCase();
@@ -297,10 +329,15 @@ resources.post("/upload", async (c) => {
 
   const relativeUrl = uploadResult.fileUrl;
 
+  // Derive uploader ID strictly from authenticated session
+  const uploaderId = user ? user.id : null;
+
   const insertResult = await query(
-    `INSERT INTO resources (resource_type, subject_id, unit_id, year_no, semester_no, title, description, file_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, title, file_url AS "fileUrl"`,
+    `INSERT INTO resources (
+       resource_type, subject_id, unit_id, year_no, semester_no, title, description, file_url, uploaded_by, file_size
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING id, title, file_url AS "fileUrl", uploaded_by AS "uploadedBy", file_size AS "fileSize", created_at AS "createdAt"`,
     [
       type,
       subject.id,
@@ -310,6 +347,8 @@ resources.post("/upload", async (c) => {
       title || `${subject.code} - ${unit ? `Unit ${unit.unitNo}` : "Syllabus"}`,
       `Uploaded ${type} resource`,
       relativeUrl,
+      uploaderId,
+      fileBuffer.length,
     ]
   );
 
@@ -331,11 +370,16 @@ resources.get("/:id", async (c) => {
     `SELECT r.id, r.resource_type AS "resourceType", r.title, r.description,
             r.file_url AS "fileUrl", r.external_url AS "externalUrl",
             r.year_no AS year, r.semester_no AS semester,
+            r.uploaded_by AS "uploadedBy",
+            u_auth.name AS "uploaderName",
+            r.file_size AS "fileSize",
+            r.created_at AS "createdAt",
             s.id AS "subjectId", s.code AS "subjectCode", s.name AS "subjectName",
             u.id AS "unitId", u.unit_no AS "unitNo", u.name AS "unitName"
      FROM resources r
      LEFT JOIN subjects s ON s.id = r.subject_id
      LEFT JOIN units u ON u.id = r.unit_id
+     LEFT JOIN users u_auth ON u_auth.id = r.uploaded_by
      WHERE r.id = $1`,
     [id]
   );
@@ -344,4 +388,56 @@ resources.get("/:id", async (c) => {
   return c.json(rows[0]);
 });
 
+resources.delete("/:id", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id)) {
+    return c.json({ error: "Invalid resource id" }, 400);
+  }
+
+  const user = await authenticateUser(c);
+  if (!user) {
+    return c.json({ error: "Unauthorized: Please sign in to delete this resource." }, 401);
+  }
+
+  const rows = await query(
+    `SELECT id, title, file_url AS "fileUrl", uploaded_by AS "uploadedBy"
+     FROM resources
+     WHERE id = $1`,
+    [id]
+  );
+
+  if (!rows.length) {
+    return c.json({ error: "Resource not found" }, 404);
+  }
+
+  const resource = rows[0];
+
+  // ONLY uploader can delete their own resource
+  if (!resource.uploadedBy || resource.uploadedBy !== user.id) {
+    return c.json({ error: "You can only delete resources uploaded by you." }, 403);
+  }
+
+  // Delete file from storage (Backblaze B2 or local) first
+  if (resource.fileUrl) {
+    try {
+      await storageService.delete(resource.fileUrl);
+    } catch (err: any) {
+      console.error("Storage deletion failed:", err);
+      return c.json({
+        error: "Failed to delete file from storage. Database record was preserved.",
+        details: err.message,
+      }, 500);
+    }
+  }
+
+  // Delete database record
+  await query("DELETE FROM resources WHERE id = $1", [id]);
+
+  return c.json({
+    message: "Resource deleted successfully.",
+    id,
+  });
+});
+
 export default resources;
+

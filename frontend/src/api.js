@@ -29,20 +29,39 @@ export const api = {
     request(`/api/resources/units?${params({ subjectId })}`),
   resolve: (type, filters) =>
     request(`/api/resources/resolve?${params({ type, ...filters })}`),
-  list: (type, filters) =>
-    request(`/api/resources/list?${params({ type, ...filters })}`),
+  list: async (type, filters) => {
+    const data = await request(`/api/resources/list?${params({ type, ...filters })}`);
+    return Array.isArray(data) ? data : (data?.resources || []);
+  },
   verifyAdmin: (key) =>
     request("/api/admin/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key }),
     }),
-  uploadResource: (formData, adminKey) => {
-    const key = adminKey || sessionStorage.getItem("rkhub_admin_key") || "rkhub-admin-2026";
+  uploadResource: (formData, token) => {
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const adminKey = sessionStorage.getItem("rkhub_admin_key");
+    if (adminKey && !token) {
+      headers["x-admin-key"] = adminKey;
+    }
     return request("/api/resources/upload", {
       method: "POST",
-      headers: key ? { "x-admin-key": key } : {},
+      headers,
       body: formData,
+    });
+  },
+  deleteResource: (id, token) => {
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return request(`/api/resources/${id}`, {
+      method: "DELETE",
+      headers,
     });
   },
   chat: (message, context = {}) =>

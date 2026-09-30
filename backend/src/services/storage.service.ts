@@ -16,6 +16,7 @@ export interface UploadResult {
 
 export interface IStorageService {
   upload(options: UploadOptions): Promise<UploadResult>;
+  delete(fileUrl: string): Promise<void>;
 }
 
 class LocalStorageService implements IStorageService {
@@ -62,6 +63,20 @@ class LocalStorageService implements IStorageService {
       storageProvider: "local",
     };
   }
+
+  async delete(fileUrl: string): Promise<void> {
+    const prefix = "/pdfs/";
+    if (!fileUrl.startsWith(prefix)) return;
+    const relativePath = fileUrl.slice(prefix.length);
+    const absolutePath = path.join(this.baseDir, relativePath);
+    try {
+      await fs.unlink(absolutePath);
+    } catch (err: any) {
+      if (err.code !== "ENOENT") {
+        throw err;
+      }
+    }
+  }
 }
 
 /**
@@ -106,10 +121,12 @@ class BackblazeB2StorageService implements IStorageService {
     }
 
     const data = (await res.json()) as any;
+    const apiUrl = data.apiInfo?.storageApi?.apiUrl || data.apiUrl;
+    const downloadUrl = data.apiInfo?.storageApi?.downloadUrl || data.downloadUrl || this.downloadUrlPrefix;
     this.cachedAuth = {
-      apiUrl: data.apiUrl,
+      apiUrl,
       authToken: data.authorizationToken,
-      downloadUrl: data.downloadUrl || this.downloadUrlPrefix,
+      downloadUrl,
       expiresAt: Date.now() + 20 * 60 * 60 * 1000, // cache for 20 hours
     };
 
@@ -123,53 +140,120 @@ class BackblazeB2StorageService implements IStorageService {
       return fallback.upload(options);
     }
 
-    const auth = await this.getAuth();
+    try {
+      const auth = await this.getAuth();
 
-    // Request upload URL from Backblaze B2
-    const getUploadUrlRes = await fetch(
-      `${auth.apiUrl}/b2api/v3/b2_get_upload_url?bucketId=${this.bucketId}`,
-      {
-        headers: {
-          Authorization: auth.authToken,
-        },
+      // Request upload URL from Backblaze B2
+      const getUploadUrlRes = await fetch(
+        `${auth.apiUrl}/b2api/v3/b2_get_upload_url?bucketId=${this.bucketId}`,
+        {
+          headers: {
+            Authorization: auth.authToken,
+          },
+        }
+      );
+
+      if (!getUploadUrlRes.ok) {
+        throw new Error(`Backblaze B2 get_upload_url failed: ${await getUploadUrlRes.text()}`);
       }
-    );
 
-    if (!getUploadUrlRes.ok) {
-      throw new Error(`Backblaze B2 get_upload_url failed: ${await getUploadUrlRes.text()}`);
+      const uploadUrlData = (await getUploadUrlRes.json()) as any;
+      const normalizedFolder = options.folder.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+      const safeFileName = options.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const b2FileName = `${normalizedFolder}/${Date.now()}-${safeFileName}`;
+
+      // SHA1 hash required by Backblaze B2
+      const sha1 = crypto.createHash("sha1").update(options.buffer).digest("hex");
+
+      const uploadRes = await fetch(uploadUrlData.uploadUrl, {
+        method: "POST",
+        headers: {
+          Authorization: uploadUrlData.authorizationToken,
+          "X-Bz-File-Name": encodeURIComponent(b2FileName),
+          "Content-Type": options.mimeType || "application/pdf",
+          "Content-Length": String(options.buffer.length),
+          "X-Bz-Content-Sha1": sha1,
+        },
+        body: new Uint8Array(options.buffer),
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(`Backblaze B2 upload failed: ${uploadRes.status} ${await uploadRes.text()}`);
+      }
+
+      // Public URL on Backblaze B2
+      const fileUrl = `${auth.downloadUrl}/file/${this.bucketName}/${b2FileName}`;
+
+      return {
+        fileUrl,
+        storageProvider: "b2",
+      };
+    } catch (err: any) {
+      console.warn(`[Storage] Backblaze B2 upload error (${err.message}). Falling back to local storage.`);
+      const fallback = new LocalStorageService();
+      return fallback.upload(options);
+    }
+  }
+
+  async delete(fileUrl: string): Promise<void> {
+    if (fileUrl.startsWith("/pdfs/")) {
+      const fallback = new LocalStorageService();
+      return fallback.delete(fileUrl);
     }
 
-    const uploadUrlData = (await getUploadUrlRes.json()) as any;
-    const normalizedFolder = options.folder.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    const safeFileName = options.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const b2FileName = `${normalizedFolder}/${Date.now()}-${safeFileName}`;
-
-    // SHA1 hash required by Backblaze B2
-    const sha1 = crypto.createHash("sha1").update(options.buffer).digest("hex");
-
-    const uploadRes = await fetch(uploadUrlData.uploadUrl, {
-      method: "POST",
-      headers: {
-        Authorization: uploadUrlData.authorizationToken,
-        "X-Bz-File-Name": encodeURIComponent(b2FileName),
-        "Content-Type": options.mimeType || "application/pdf",
-        "Content-Length": String(options.buffer.length),
-        "X-Bz-Content-Sha1": sha1,
-      },
-      body: new Uint8Array(options.buffer),
-    });
-
-    if (!uploadRes.ok) {
-      throw new Error(`Backblaze B2 upload failed: ${uploadRes.status} ${await uploadRes.text()}`);
+    if (!this.keyId || !this.applicationKey) {
+      const fallback = new LocalStorageService();
+      return fallback.delete(fileUrl);
     }
 
-    // Public URL on Backblaze B2
-    const fileUrl = `${auth.downloadUrl}/file/${this.bucketName}/${b2FileName}`;
+    try {
+      const auth = await this.getAuth();
 
-    return {
-      fileUrl,
-      storageProvider: "b2",
-    };
+      let b2FileName = fileUrl;
+      const marker = `/file/${this.bucketName}/`;
+      const idx = fileUrl.indexOf(marker);
+      if (idx !== -1) {
+        b2FileName = decodeURIComponent(fileUrl.substring(idx + marker.length));
+      }
+
+      const listRes = await fetch(
+        `${auth.apiUrl}/b2api/v3/b2_list_file_names?bucketId=${this.bucketId}&startFileName=${encodeURIComponent(b2FileName)}&maxFileCount=1&prefix=${encodeURIComponent(b2FileName)}`,
+        {
+          headers: {
+            Authorization: auth.authToken,
+          },
+        }
+      );
+
+      if (!listRes.ok) {
+        throw new Error(`Backblaze B2 list_file_names failed: ${listRes.status} ${await listRes.text()}`);
+      }
+
+      const listData = (await listRes.json()) as any;
+      const file = listData.files?.find((f: any) => f.fileName === b2FileName) || listData.files?.[0];
+
+      if (file && file.fileId) {
+        const delRes = await fetch(`${auth.apiUrl}/b2api/v3/b2_delete_file_version`, {
+          method: "POST",
+          headers: {
+            Authorization: auth.authToken,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileName: file.fileName,
+            fileId: file.fileId,
+          }),
+        });
+
+        if (!delRes.ok) {
+          throw new Error(`Backblaze B2 delete_file_version failed: ${delRes.status} ${await delRes.text()}`);
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[Storage] Backblaze B2 delete error: ${err.message}`);
+      const fallback = new LocalStorageService();
+      await fallback.delete(fileUrl).catch(() => {});
+    }
   }
 }
 
@@ -234,6 +318,33 @@ class S3CompatibleStorageService implements IStorageService {
       fileUrl: publicUrl,
       storageProvider: this.providerName,
     };
+  }
+
+  async delete(fileUrl: string): Promise<void> {
+    if (!this.bucket || !this.endpoint) {
+      const localFallback = new LocalStorageService();
+      return localFallback.delete(fileUrl);
+    }
+
+    let key = fileUrl;
+    if (this.publicDomain && fileUrl.startsWith(this.publicDomain)) {
+      key = fileUrl.replace(this.publicDomain, "").replace(/^\/+/, "");
+    }
+
+    const deleteUrl = `${this.endpoint.replace(/\/$/, "")}/${this.bucket}/${key}`;
+    const headers: Record<string, string> = {};
+    if (this.accessKeyId && this.secretAccessKey) {
+      headers["Authorization"] = `Bearer ${this.secretAccessKey}`;
+    }
+
+    const response = await fetch(deleteUrl, {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`Failed to delete from cloud storage: ${response.status} ${response.statusText}`);
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import { api } from "../api";
 import { Choice } from "../components/Choice";
 import { Document } from "../components/Document";
 import { Materials } from "../components/Materials";
+import { ResourcePdfList } from "../components/ResourcePdfList";
 import { Selection } from "../components/Selection";
 import { SubjectList } from "../components/SubjectList";
 import { resourceMeta } from "../constants/resources";
@@ -152,22 +153,22 @@ export function ResourcePage({ type, go }) {
     };
   }, [subject, type]);
 
-  const fetchMaterials = () => {
+  const fetchResources = () => {
     if (!subject || !year || !course || !semester || !unit) return;
-    if (type !== "reference") return;
+    if (type === "syllabus") return;
 
     setLoading(true);
     setError("");
 
     api
-      .list("reference", { subjectId: subject.id, unitId: unit.id })
+      .list(type, { subjectId: subject.id, unitId: unit.id })
       .then((data) => setResources(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchMaterials();
+    fetchResources();
   }, [subject, unit, type, year, course, semester]);
 
   const chooseYear = (value) =>
@@ -212,7 +213,7 @@ export function ResourcePage({ type, go }) {
 
   const chooseUnit = (value) =>
     pushStep({
-      step: type === "reference" ? "materials" : "document",
+      step: type === "syllabus" ? "document" : "pdf-list",
       year,
       course,
       semester,
@@ -361,6 +362,22 @@ export function ResourcePage({ type, go }) {
         </Selection>
       )}
 
+      {(step === "pdf-list" || step === "materials") && subject && unit && (
+        <ResourcePdfList
+          resourceType={type}
+          resources={resources}
+          year={year}
+          course={course}
+          semester={semester}
+          subject={subject}
+          unit={unit}
+          loading={loading}
+          error={error}
+          onUploaded={fetchResources}
+          onBack={() => window.history.back()}
+        />
+      )}
+
       {step === "document" && subject && (
         <Document
           type={type}
@@ -370,19 +387,6 @@ export function ResourcePage({ type, go }) {
           subject={subject}
           unit={unit}
           onBack={() => window.history.back()}
-        />
-      )}
-
-      {step === "materials" && subject && unit && (
-        <Materials
-          course={course}
-          year={year}
-          semester={semester}
-          subject={subject}
-          unit={unit}
-          resources={resources}
-          loading={loading}
-          onUploaded={fetchMaterials}
         />
       )}
     </main>

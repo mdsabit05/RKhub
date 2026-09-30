@@ -38,6 +38,13 @@ CREATE TABLE IF NOT EXISTS units (
   UNIQUE(subject_id, unit_no)
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  email TEXT,
+  name TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS resources (
   id SERIAL PRIMARY KEY,
   resource_type TEXT NOT NULL CHECK (
@@ -51,6 +58,8 @@ CREATE TABLE IF NOT EXISTS resources (
   description TEXT,
   file_url TEXT,
   external_url TEXT,
+  uploaded_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  file_size BIGINT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (file_url IS NOT NULL OR external_url IS NOT NULL)
 );
@@ -63,3 +72,6 @@ CREATE INDEX IF NOT EXISTS idx_units_subject
 
 CREATE INDEX IF NOT EXISTS idx_resources_lookup
   ON resources(resource_type, subject_id, unit_id);
+
+CREATE INDEX IF NOT EXISTS idx_resources_uploaded_by
+  ON resources(uploaded_by);
