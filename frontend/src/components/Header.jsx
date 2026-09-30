@@ -1,16 +1,73 @@
 import React from "react";
-import { GraduationCap, LogIn, Menu, UserPlus, X } from "lucide-react";
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import { GraduationCap, LogIn, LogOut, Menu, UserPlus, X } from "lucide-react";
+import { SignedIn, SignedOut, UserButton, useClerk, useUser } from "@clerk/clerk-react";
 
-function ClerkUserProfile() {
+function ClerkUserProfile({ go }) {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const displayName = user?.firstName || user?.username || "Student";
 
   return (
-    <div className="profile">
-      <UserButton afterSignOutUrl="/" />
-      <span>Hello, {displayName}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="profile">
+        <UserButton afterSignOutUrl="/" />
+        <span>Hello, {displayName}</span>
+      </div>
+
+      <button
+        className="secondary-action"
+        type="button"
+        onClick={() => signOut(() => go("home"))}
+        style={{
+          minHeight: 36,
+          padding: "0 13px",
+          fontSize: 13,
+          cursor: "pointer",
+          gap: 6,
+          color: "#b42318",
+          borderColor: "#fecdd3",
+          background: "#fff5f5",
+        }}
+        title="Sign out of RKhub"
+      >
+        <LogOut size={14} />
+        <span>Sign Out</span>
+      </button>
     </div>
+  );
+}
+
+function MobileClerkAuth({ go }) {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const displayName = user?.firstName || user?.username || "Student";
+
+  return (
+    <>
+      <SignedIn>
+        <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <UserButton afterSignOutUrl="/" />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>Hello, {displayName}</span>
+        </div>
+        <button
+          className="nav-link"
+          onClick={() => signOut(() => go("home"))}
+          type="button"
+          style={{ color: "#b42318", display: "flex", alignItems: "center", gap: 6 }}
+        >
+          <LogOut size={15} />
+          Sign Out
+        </button>
+      </SignedIn>
+      <SignedOut>
+        <button className="nav-link" onClick={() => go("login")} type="button">
+          Sign In
+        </button>
+        <button className="nav-link" onClick={() => go("register")} type="button">
+          Register
+        </button>
+      </SignedOut>
+    </>
   );
 }
 
@@ -55,22 +112,7 @@ export function Header({ page, menu, setMenu, go, hasClerkKey }) {
         {/* Mobile auth buttons inside nav drawer */}
         <div style={{ display: "none" }} className="mobile-auth-links">
           {hasClerkKey ? (
-            <>
-              <SignedIn>
-                <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <UserButton afterSignOutUrl="/" />
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>Account Profile</span>
-                </div>
-              </SignedIn>
-              <SignedOut>
-                <button className="nav-link" onClick={() => go("login")} type="button">
-                  Sign In
-                </button>
-                <button className="nav-link" onClick={() => go("register")} type="button">
-                  Register
-                </button>
-              </SignedOut>
-            </>
+            <MobileClerkAuth go={go} />
           ) : (
             <>
               <button className="nav-link" onClick={() => go("login")} type="button">
@@ -88,7 +130,7 @@ export function Header({ page, menu, setMenu, go, hasClerkKey }) {
       {hasClerkKey ? (
         <>
           <SignedIn>
-            <ClerkUserProfile />
+            <ClerkUserProfile go={go} />
           </SignedIn>
           <SignedOut>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
