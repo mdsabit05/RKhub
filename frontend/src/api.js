@@ -70,6 +70,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, context }),
     }),
+  ask: (prompt) =>
+    request("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    }),
 };
 
 export { API_URL };
