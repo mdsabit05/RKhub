@@ -221,7 +221,7 @@ function Home({ prompt, setPrompt, notice, submit, go, aiLoading, aiResult, aiEr
                 submit();
               }
             }}
-            placeholder="What do u want?"
+            placeholder={"Try: 'Give me BCA 2nd year DBMS Unit 1 notes'\nOr: 'Find PYQ for semester 3 Mathematics'\nOr: 'Predict my upcoming semester exam questions'\nOr: 'Show BCA syllabus for 2nd year'"}
             aria-label="Ask RKhub"
           />
 
