@@ -226,11 +226,6 @@ function Home({ prompt, setPrompt, notice, submit, go, aiLoading, aiResult, aiEr
           />
 
           <div className="composer-footer">
-            <button className="attach-button" type="button">
-              <Paperclip size={18} />
-              <span>Attach (optional)</span>
-            </button>
-
             <button className="ask-button" onClick={submit} type="button">
               <Send size={17} />
               <span>Ask</span>
@@ -249,48 +244,6 @@ function Home({ prompt, setPrompt, notice, submit, go, aiLoading, aiResult, aiEr
 
         {!aiLoading && <AIResult result={aiResult} error={aiError} />}
 
-        <div className="suggestions">
-          <div className="suggestion-label">
-            <Sparkles size={17} />
-            <span>Try asking</span>
-          </div>
-
-          <div className="suggestion-grid">
-            {suggestions.map(([text, target], i) => {
-              const Icon =
-                i === 0
-                  ? FileText
-                  : i === 1
-                    ? Search
-                    : i === 2
-                      ? GraduationCap
-                      : i === 3
-                        ? BookOpen
-                        : Sparkles;
-
-              return (
-                <button
-                  className="suggestion"
-                  key={text}
-                  onClick={() => {
-                    if (target === "predict") {
-                      setPrompt(text);
-                    } else {
-                      go(target);
-                    }
-                  }}
-                  type="button"
-                >
-                  <span className={`suggestion-icon ${tones[i % tones.length]}`}>
-                    <Icon size={17} />
-                  </span>
-                  <span className="suggestion-text">{text}</span>
-                  <ArrowRight size={17} className="suggestion-arrow" />
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </section>
 
       <section className="resource-grid">
