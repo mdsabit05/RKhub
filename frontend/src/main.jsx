@@ -26,7 +26,7 @@ const resourceMeta = {
     description: "Access official college notes unit by unit.",
     icon: FileText,
   },
-  pyqs: {
+  pyq: {
     title: "Previous Year Questions",
     description: "Browse question papers by semester, subject and unit.",
     icon: Search,
@@ -50,6 +50,9 @@ function App() {
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [notice, setNotice] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiError, setAiError] = useState("");
 
   const go = (nextPage) => {
     if (nextPage !== page) {
@@ -86,7 +89,16 @@ function App() {
       setNotice("Type what you need first.");
       return;
     }
-    setNotice(`Demo request received: "${prompt.trim()}"`);
+    setNotice("");
+    setAiResult(null);
+    setAiError("");
+    setAiLoading(true);
+
+    api
+      .ask(prompt.trim())
+      .then((data) => setAiResult(data))
+      .catch((err) => setAiError(err.message))
+      .finally(() => setAiLoading(false));
   };
 
   return (
@@ -99,6 +111,9 @@ function App() {
           notice={notice}
           submit={submit}
           go={go}
+          aiLoading={aiLoading}
+          aiResult={aiResult}
+          aiError={aiError}
         />
       ) : (
         <ResourcePage type={page} go={go} />
@@ -161,10 +176,10 @@ function Header({ page, menu, setMenu, go }) {
   );
 }
 
-function Home({ prompt, setPrompt, notice, submit, go }) {
+function Home({ prompt, setPrompt, notice, submit, go, aiLoading, aiResult, aiError }) {
   const suggestions = [
     ["Give me BCA 2nd year DBMS Unit 1 notes", "notes"],
-    ["Find the 2025 DBMS PYQ", "pyqs"],
+    ["Find the 2025 DBMS PYQ", "pyq"],
     ["Show me BCA 2nd year DBMS syllabus", "syllabus"],
     ["Give me DBMS Unit 2 reference material", "reference"],
     ["Predict my upcoming DBMS exam questions", "predict"],
@@ -172,7 +187,7 @@ function Home({ prompt, setPrompt, notice, submit, go }) {
 
   const resources = [
     ["Notes", "College notes and study materials", FileText, "notes"],
-    ["PYQs", "Previous year question papers", Search, "pyqs"],
+    ["PYQs", "Previous year question papers", Search, "pyq"],
     ["Syllabus", "Course and subject syllabus", GraduationCap, "syllabus"],
     ["Reference Material", "Additional reference materials", Library, "reference"],
   ];
@@ -224,6 +239,15 @@ function Home({ prompt, setPrompt, notice, submit, go }) {
         </div>
 
         {notice && <div className="demo-notice">{notice}</div>}
+
+        {aiLoading && (
+          <div className="ai-result ai-result-loading">
+            <Sparkles size={16} />
+            <span>Finding your resource…</span>
+          </div>
+        )}
+
+        {!aiLoading && <AIResult result={aiResult} error={aiError} />}
 
         <div className="suggestions">
           <div className="suggestion-label">
@@ -466,20 +490,7 @@ function ResourcePage({ type, go }) {
       unit: null,
     });
 
-  const chooseCourse = (value) => {
-    if (type === "notes") {
-      // Notes still use Year → Course → Semester → Subject → Unit.
-      pushStep({
-        step: "semester",
-        year,
-        course: value,
-        semester: null,
-        subject: null,
-        unit: null,
-      });
-      return;
-    }
-
+  const chooseCourse = (value) =>
     pushStep({
       step: "semester",
       year,
@@ -488,7 +499,6 @@ function ResourcePage({ type, go }) {
       subject: null,
       unit: null,
     });
-  };
 
   const chooseSemester = (value) =>
     pushStep({
@@ -557,6 +567,8 @@ function ResourcePage({ type, go }) {
       next.unit = null;
     } else if (targetStep === "subject") {
       next.subject = null;
+      next.unit = null;
+    } else if (targetStep === "unit") {
       next.unit = null;
     }
 
@@ -812,7 +824,7 @@ function Document({ type, year, course, semester, subject, unit, onBack }) {
 
       <div className="document-info">
         <div className="eyebrow">
-          {type === "notes" ? "College Notes" : type === "pyqs" ? "Previous Year Question Paper" : "College Syllabus"}
+          {type === "notes" ? "College Notes" : type === "pyq" ? "Previous Year Question Paper" : "College Syllabus"}
         </div>
 
         <h2>
@@ -919,6 +931,69 @@ function Materials({ course, year, semester, subject, unit, resources, loading }
       </div>
     </section>
   );
+}
+
+function AIResult({ result, error }) {
+  if (error) {
+    return (
+      <div className="ai-result ai-result-error">
+        <X size={16} />
+        <span>{error}</span>
+      </div>
+    );
+  }
+
+  if (!result) return null;
+
+  if (result.partial || result.notFound) {
+    return (
+      <div className="ai-result ai-result-partial">
+        <Sparkles size={16} className="ai-result-icon" />
+        <div>
+          <p>{result.message}</p>
+          {result.hint && <small>{result.hint}</small>}
+        </div>
+      </div>
+    );
+  }
+
+  if (result.resource) {
+    const { resource, subject, intent } = result;
+    const url = resource.fileUrl || resource.externalUrl;
+    const typeLabels = {
+      notes: "Notes",
+      pyq: "PYQ",
+      syllabus: "Syllabus",
+      reference: "Reference",
+    };
+
+    return (
+      <div className="ai-result ai-result-found">
+        <div className="ai-result-header">
+          <span className="ai-result-badge">{typeLabels[intent.type] ?? intent.type}</span>
+          <h3>{subject.name}</h3>
+          {resource.unitName && (
+            <span className="ai-result-unit">{resource.unitName}</span>
+          )}
+        </div>
+
+        {resource.title && <p className="ai-result-title">{resource.title}</p>}
+
+        <div className="document-actions">
+          <a className="primary-action" href={url} target="_blank" rel="noreferrer">
+            <ExternalLink size={16} />
+            Open PDF
+          </a>
+          <a className="secondary-action" href={url} target="_blank" rel="noreferrer" download>
+            <Download size={16} />
+            Download
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 createRoot(document.getElementById("root")).render(

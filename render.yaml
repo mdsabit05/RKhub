@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: rkhub-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rkhub-db
+          property: connectionString
+      - key: CORS_ORIGIN
+        value: https://rkhub.pages.dev   # replace with your Cloudflare Pages URL after deploy
+      - key: NVIDIA_API_KEY
+        sync: false                       # set manually in Render dashboard
+
+databases:
+  - name: rkhub-db
+    databaseName: rkhub
+    user: rkhub
+    plan: free
