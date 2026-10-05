@@ -26,7 +26,13 @@ export function App({ hasClerkKey }) {
   };
 
   useEffect(() => {
+    const CLERK_HASHES = ["/sso-callback", "/continue", "/verify", "/factor-one", "/factor-two", "/reset-password", "/sign-in", "/sign-up"];
+
     const onPopState = (event) => {
+      // Ignore Clerk's internal hash routing — let ClerkProvider handle it
+      const hash = window.location.hash.replace(/^#/, "");
+      if (CLERK_HASHES.some((h) => hash.startsWith(h))) return;
+
       if (event.state?.rkhubPage) {
         setPage(event.state.rkhubPage);
       } else {
