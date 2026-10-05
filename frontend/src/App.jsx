@@ -85,7 +85,7 @@ export function App({ hasClerkKey }) {
         />
       ) : page === "admin" ? (
         <AdminPage go={go} />
-      ) : page === "login" || page === "register" ? (
+      ) : page === "login" || page === "register" || page === "account" ? (
         <AuthPage mode={page} go={go} hasClerkKey={hasClerkKey} />
       ) : (
         <ResourcePage type={page} go={go} />

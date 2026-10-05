@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SignIn, SignUp } from "@clerk/clerk-react";
+import { SignIn, SignUp, UserProfile, SignedIn, SignedOut } from "@clerk/clerk-react";
 import {
   ArrowLeft,
   BookOpen,
@@ -66,10 +66,8 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
           backgroundColor: "#0d655f",
         },
       },
-      footerActionLink: {
-        color: "#0f766e",
-        fontWeight: 700,
-      },
+      // Hide Clerk's built-in cross-nav footer — we use our own below
+      footer: { display: "none" },
     },
   };
 
@@ -98,6 +96,8 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
           <h2 style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2, margin: "0 0 12px", color: "#111827" }}>
             {mode === "login"
               ? "Welcome back to your academic workspace"
+              : mode === "account"
+              ? "Your student account"
               : "Create your student account to get started"}
           </h2>
 
@@ -204,21 +204,61 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
         {/* Right Column: Embedded Clerk Component */}
         <div className="auth-form-wrapper">
           {hasClerkKey ? (
-            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-              {mode === "login" ? (
-                <SignIn
-                  routing="hash"
-                  appearance={clerkAppearance}
-                  signUpUrl="#/register"
-                  afterSignInUrl="/"
-                />
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+              {mode === "account" ? (
+                <>
+                  <SignedIn>
+                    <UserProfile appearance={clerkAppearance} />
+                  </SignedIn>
+                  <SignedOut>
+                    <div style={{ textAlign: "center", color: "#64748b", fontSize: 14 }}>
+                      You are not signed in.{" "}
+                      <button
+                        onClick={() => go("login")}
+                        type="button"
+                        style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 14 }}
+                      >
+                        Sign In
+                      </button>
+                    </div>
+                  </SignedOut>
+                </>
+              ) : mode === "login" ? (
+                <>
+                  <SignIn
+                    routing="hash"
+                    appearance={clerkAppearance}
+                    afterSignInUrl="/"
+                  />
+                  <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
+                    Don't have an account?{" "}
+                    <button
+                      onClick={() => go("register")}
+                      type="button"
+                      style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 13.5 }}
+                    >
+                      Register
+                    </button>
+                  </p>
+                </>
               ) : (
-                <SignUp
-                  routing="hash"
-                  appearance={clerkAppearance}
-                  signInUrl="#/login"
-                  afterSignUpUrl="/"
-                />
+                <>
+                  <SignUp
+                    routing="hash"
+                    appearance={clerkAppearance}
+                    afterSignUpUrl="/"
+                  />
+                  <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => go("login")}
+                      type="button"
+                      style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 13.5 }}
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </>
               )}
             </div>
           ) : (

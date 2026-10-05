@@ -8,11 +8,17 @@ function ClerkUserProfile({ go }) {
   const displayName = user?.firstName || user?.username || "Student";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div className="profile">
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <button
+        className="secondary-action"
+        type="button"
+        onClick={() => go("account")}
+        style={{ minHeight: 36, padding: "0 13px", fontSize: 13, cursor: "pointer", gap: 7 }}
+        title="View your account"
+      >
         <UserButton afterSignOutUrl="/" />
-        <span>Hello, {displayName}</span>
-      </div>
+        <span>{displayName}</span>
+      </button>
 
       <button
         className="secondary-action"
@@ -49,6 +55,9 @@ function MobileClerkAuth({ go }) {
           <UserButton afterSignOutUrl="/" />
           <span style={{ fontSize: 13, fontWeight: 600 }}>Hello, {displayName}</span>
         </div>
+        <button className="nav-link" onClick={() => go("account")} type="button">
+          My Account
+        </button>
         <button
           className="nav-link"
           onClick={() => signOut(() => go("home"))}
