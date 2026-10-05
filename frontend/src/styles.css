@@ -489,6 +489,26 @@ button {
   font-size: 14px;
 }
 
+/* CHOICE LOADING SKELETON */
+.choice-loading {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.choice-skeleton {
+  min-height: 72px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* CHOICE GRID */
 .choice-grid {
   display: grid;

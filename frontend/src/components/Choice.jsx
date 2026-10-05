@@ -8,7 +8,17 @@ export function Choice({
   secondaryKey,
   icon: Icon = ChevronRight,
   empty,
+  loading,
 }) {
+  if (loading) {
+    return (
+      <div className="choice-loading">
+        {[1, 2, 3].map((n) => (
+          <div key={n} className="choice-skeleton" />
+        ))}
+      </div>
+    );
+  }
   if (!items?.length) return <div className="empty-state">{empty}</div>;
 
   return (

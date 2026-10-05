@@ -306,6 +306,7 @@ export function ResourcePage({ type, go }) {
             labelKey="name"
             select={chooseYear}
             empty="No academic years available."
+            loading={loading}
           />
         </Selection>
       )}
@@ -318,6 +319,7 @@ export function ResourcePage({ type, go }) {
             secondaryKey="code"
             select={chooseCourse}
             empty="No courses available for this year."
+            loading={loading}
           />
         </Selection>
       )}
@@ -333,6 +335,7 @@ export function ResourcePage({ type, go }) {
             secondaryKey="semester"
             select={chooseSemester}
             empty="No semesters available."
+            loading={loading}
           />
         </Selection>
       )}
@@ -342,7 +345,13 @@ export function ResourcePage({ type, go }) {
           title="Choose subject"
           sub={`${course?.code} • ${year?.name} • ${semester?.name}`}
         >
-          <SubjectList subjects={subjects} select={chooseSubject} />
+          {loading ? (
+            <div className="choice-loading">
+              {[1, 2, 3, 4].map((n) => <div key={n} className="choice-skeleton" />)}
+            </div>
+          ) : (
+            <SubjectList subjects={subjects} select={chooseSubject} />
+          )}
         </Selection>
       )}
 
@@ -358,6 +367,7 @@ export function ResourcePage({ type, go }) {
             select={chooseUnit}
             icon={FileText}
             empty="No units available."
+            loading={loading}
           />
         </Selection>
       )}
