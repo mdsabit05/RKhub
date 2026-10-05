@@ -12,6 +12,7 @@
     "test": "tsx test-e2e.mjs"
   },
   "dependencies": {
+    "@clerk/backend": "^3.23.0",
     "@hono/node-server": "^1.19.17",
     "dotenv": "^16.4.7",
     "hono": "^4.6.15",

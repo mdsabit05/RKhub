@@ -4,17 +4,25 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { App } from "./App";
 import "./styles.css";
 
-const clerkPubKey =
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  localStorage.getItem("rkhub_clerk_pub_key") ||
-  "";
+const ENV_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "";
+const LS_KEY = (() => {
+  try { return localStorage.getItem("rkhub_clerk_pub_key") || ""; } catch { return ""; }
+})();
+
+const clerkPubKey = ENV_KEY || LS_KEY;
+const hasClerkKey = Boolean(clerkPubKey);
 
 const rootElement = document.getElementById("root");
 
-if (clerkPubKey) {
+if (hasClerkKey) {
   createRoot(rootElement).render(
     <React.StrictMode>
-      <ClerkProvider publishableKey={clerkPubKey}>
+      <ClerkProvider
+        publishableKey={clerkPubKey}
+        afterSignInUrl="/"
+        afterSignUpUrl="/"
+        afterSignOutUrl="/"
+      >
         <App hasClerkKey={true} />
       </ClerkProvider>
     </React.StrictMode>

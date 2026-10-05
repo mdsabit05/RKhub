@@ -228,7 +228,6 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
                   <SignIn
                     routing="hash"
                     appearance={clerkAppearance}
-                    afterSignInUrl="/"
                   />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Don't have an account?{" "}
@@ -246,7 +245,6 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
                   <SignUp
                     routing="hash"
                     appearance={clerkAppearance}
-                    afterSignUpUrl="/"
                   />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Already have an account?{" "}
