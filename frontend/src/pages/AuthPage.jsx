@@ -210,12 +210,14 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
                   routing="hash"
                   appearance={clerkAppearance}
                   signUpUrl="#/register"
+                  afterSignInUrl="/"
                 />
               ) : (
                 <SignUp
                   routing="hash"
                   appearance={clerkAppearance}
                   signInUrl="#/login"
+                  afterSignUpUrl="/"
                 />
               )}
             </div>
