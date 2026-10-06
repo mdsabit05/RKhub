@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowLeft, BookOpen, FileCheck, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
-import { SignIn, SignUp, UserProfile, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { Show, SignIn, SignUp, UserProfile } from "@clerk/react";
 
 const clerkAppearance = {
   variables: {
@@ -139,10 +139,10 @@ export function AuthPage({ mode = "login", go }) {
           <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
             {mode === "account" ? (
               <>
-                <SignedIn>
+                <Show when="signed-in">
                   <UserProfile appearance={clerkAppearance} />
-                </SignedIn>
-                <SignedOut>
+                </Show>
+                <Show when="signed-out">
                   <p style={{ fontSize: 14, color: "#64748b" }}>
                     You are not signed in.{" "}
                     <button
@@ -153,7 +153,7 @@ export function AuthPage({ mode = "login", go }) {
                       Sign In
                     </button>
                   </p>
-                </SignedOut>
+                </Show>
               </>
             ) : mode === "login" ? (
               <>

@@ -12,7 +12,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/react";
 import { API_URL, api } from "../api";
 
 function formatFileSize(bytes) {

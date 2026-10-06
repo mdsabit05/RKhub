@@ -1,6 +1,6 @@
 import React from "react";
 import { GraduationCap, LogIn, LogOut, Menu, UserPlus, X } from "lucide-react";
-import { SignedIn, SignedOut, useClerk, useUser } from "@clerk/clerk-react";
+import { Show, useClerk, useUser } from "@clerk/react";
 
 function UserNav({ go }) {
   const { user } = useUser();
@@ -80,27 +80,27 @@ export function Header({ page, menu, setMenu, go }) {
 
         {/* Mobile auth links inside drawer */}
         <div className="mobile-auth-links" style={{ display: "none" }}>
-          <SignedIn>
+          <Show when="signed-in">
             <button className="nav-link" onClick={() => go("account")} type="button">
               My Account
             </button>
-          </SignedIn>
-          <SignedOut>
+          </Show>
+          <Show when="signed-out">
             <button className="nav-link" onClick={() => go("login")} type="button">
               Sign In
             </button>
             <button className="nav-link" onClick={() => go("register")} type="button">
               Register
             </button>
-          </SignedOut>
+          </Show>
         </div>
       </nav>
 
       {/* Desktop auth area */}
-      <SignedIn>
+      <Show when="signed-in">
         <UserNav go={go} />
-      </SignedIn>
-      <SignedOut>
+      </Show>
+      <Show when="signed-out">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             className="secondary-action"
@@ -121,7 +121,7 @@ export function Header({ page, menu, setMenu, go }) {
             <span>Register</span>
           </button>
         </div>
-      </SignedOut>
+      </Show>
 
       <button
         className="menu-button"

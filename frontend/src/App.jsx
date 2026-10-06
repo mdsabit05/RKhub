@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { api } from "./api";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
