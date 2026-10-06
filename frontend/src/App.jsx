@@ -16,6 +16,8 @@ const CLERK_HASHES = [
   "/factor-one",
   "/factor-two",
   "/reset-password",
+  "/sign-in",
+  "/sign-up",
 ];
 
 function isClerkHash() {
