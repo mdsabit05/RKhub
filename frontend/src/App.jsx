@@ -28,10 +28,14 @@ export function App({ hasClerkKey }) {
   useEffect(() => {
     const CLERK_HASHES = ["/sso-callback", "/continue", "/verify", "/factor-one", "/factor-two", "/reset-password", "/sign-in", "/sign-up"];
 
+    const isClerkHash = () => {
+      const hash = window.location.hash.replace(/^#/, "");
+      return CLERK_HASHES.some((h) => hash.startsWith(h));
+    };
+
     const onPopState = (event) => {
       // Ignore Clerk's internal hash routing — let ClerkProvider handle it
-      const hash = window.location.hash.replace(/^#/, "");
-      if (CLERK_HASHES.some((h) => hash.startsWith(h))) return;
+      if (isClerkHash()) return;
 
       if (event.state?.rkhubPage) {
         setPage(event.state.rkhubPage);
@@ -43,7 +47,8 @@ export function App({ hasClerkKey }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    if (!window.history.state?.rkhubPage) {
+    // On initial load, don't overwrite state if Clerk is mid-flow
+    if (!window.history.state?.rkhubPage && !isClerkHash()) {
       window.history.replaceState({ rkhubPage: "home" }, "");
     }
 

@@ -226,8 +226,9 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
               ) : mode === "login" ? (
                 <>
                   <SignIn
-                    routing="hash"
+                    routing="virtual"
                     appearance={clerkAppearance}
+                    signUpUrl="https://rkhub.pages.dev"
                   />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Don't have an account?{" "}
@@ -243,8 +244,9 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
               ) : (
                 <>
                   <SignUp
-                    routing="hash"
+                    routing="virtual"
                     appearance={clerkAppearance}
+                    signInUrl="https://rkhub.pages.dev"
                   />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Already have an account?{" "}
