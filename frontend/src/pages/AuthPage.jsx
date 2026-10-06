@@ -157,7 +157,7 @@ export function AuthPage({ mode = "login", go }) {
               </>
             ) : mode === "login" ? (
               <>
-                <SignIn routing="hash" fallbackRedirectUrl="/" appearance={clerkAppearance} />
+                <SignIn routing="hash" fallbackRedirectUrl="/" signUpUrl="#sign-up" appearance={clerkAppearance} />
                 <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                   Don't have an account?{" "}
                   <button
@@ -171,7 +171,7 @@ export function AuthPage({ mode = "login", go }) {
               </>
             ) : (
               <>
-                <SignUp routing="hash" fallbackRedirectUrl="/" appearance={clerkAppearance} />
+                <SignUp routing="hash" fallbackRedirectUrl="/" signInUrl="#sign-in" appearance={clerkAppearance} />
                 <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                   Already have an account?{" "}
                   <button
