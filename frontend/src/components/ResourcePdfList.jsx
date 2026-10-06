@@ -12,26 +12,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useAuth, useUser } from "@clerk/clerk-react";
 import { API_URL, api } from "../api";
-
-// Safe wrappers — Clerk v5 throws if called outside ClerkProvider
-function useSafeUser() {
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useUser();
-  } catch {
-    return { user: null };
-  }
-}
-function useSafeAuth() {
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useAuth();
-  } catch {
-    return { getToken: null };
-  }
-}
 
 function formatFileSize(bytes) {
   if (!bytes || isNaN(bytes)) return "—";
@@ -68,8 +49,8 @@ export function ResourcePdfList({
   onUploaded,
   onBack,
 }) {
-  const { user } = useSafeUser();
-  const { getToken } = useSafeAuth();
+  const user = null;
+  const getToken = null;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showUpload, setShowUpload] = useState(false);

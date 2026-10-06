@@ -1,86 +1,7 @@
 import React from "react";
-import { GraduationCap, LogIn, LogOut, Menu, UserPlus, X } from "lucide-react";
-import { SignedIn, SignedOut, UserButton, useClerk, useUser } from "@clerk/clerk-react";
+import { GraduationCap, LogIn, Menu, UserPlus, X } from "lucide-react";
 
-function ClerkUserProfile({ go }) {
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const displayName = user?.firstName || user?.username || "Student";
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <button
-        className="secondary-action"
-        type="button"
-        onClick={() => go("account")}
-        style={{ minHeight: 36, padding: "0 13px", fontSize: 13, cursor: "pointer", gap: 7 }}
-        title="View your account"
-      >
-        <UserButton afterSignOutUrl="/" />
-        <span>{displayName}</span>
-      </button>
-
-      <button
-        className="secondary-action"
-        type="button"
-        onClick={() => signOut(() => go("home"))}
-        style={{
-          minHeight: 36,
-          padding: "0 13px",
-          fontSize: 13,
-          cursor: "pointer",
-          gap: 6,
-          color: "#b42318",
-          borderColor: "#fecdd3",
-          background: "#fff5f5",
-        }}
-        title="Sign out of RKhub"
-      >
-        <LogOut size={14} />
-        <span>Sign Out</span>
-      </button>
-    </div>
-  );
-}
-
-function MobileClerkAuth({ go }) {
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const displayName = user?.firstName || user?.username || "Student";
-
-  return (
-    <>
-      <SignedIn>
-        <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-          <UserButton afterSignOutUrl="/" />
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Hello, {displayName}</span>
-        </div>
-        <button className="nav-link" onClick={() => go("account")} type="button">
-          My Account
-        </button>
-        <button
-          className="nav-link"
-          onClick={() => signOut(() => go("home"))}
-          type="button"
-          style={{ color: "#b42318", display: "flex", alignItems: "center", gap: 6 }}
-        >
-          <LogOut size={15} />
-          Sign Out
-        </button>
-      </SignedIn>
-      <SignedOut>
-        <button className="nav-link" onClick={() => go("login")} type="button">
-          Sign In
-        </button>
-        <button className="nav-link" onClick={() => go("register")} type="button">
-          Register
-        </button>
-      </SignedOut>
-    </>
-  );
-}
-
-export function Header({ page, menu, setMenu, go, hasClerkKey }) {
+export function Header({ page, menu, setMenu, go }) {
   return (
     <header className="header">
       <button className="brand brand-button" onClick={() => go("home")} type="button">
@@ -118,74 +39,36 @@ export function Header({ page, menu, setMenu, go, hasClerkKey }) {
           Admin
         </button>
 
-        {/* Mobile auth buttons inside nav drawer */}
         <div style={{ display: "none" }} className="mobile-auth-links">
-          {hasClerkKey ? (
-            <MobileClerkAuth go={go} />
-          ) : (
-            <>
-              <button className="nav-link" onClick={() => go("login")} type="button">
-                Sign In
-              </button>
-              <button className="nav-link" onClick={() => go("register")} type="button">
-                Register
-              </button>
-            </>
-          )}
+          <button className="nav-link" onClick={() => go("login")} type="button">
+            Sign In
+          </button>
+          <button className="nav-link" onClick={() => go("register")} type="button">
+            Register
+          </button>
         </div>
       </nav>
 
-      {/* Desktop Profile / Auth buttons */}
-      {hasClerkKey ? (
-        <>
-          <SignedIn>
-            <ClerkUserProfile go={go} />
-          </SignedIn>
-          <SignedOut>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button
-                className="secondary-action"
-                type="button"
-                onClick={() => go("login")}
-                style={{ minHeight: 38, padding: "0 14px", fontSize: 13, cursor: "pointer" }}
-              >
-                <LogIn size={15} />
-                <span>Sign In</span>
-              </button>
-              <button
-                className="primary-action"
-                type="button"
-                onClick={() => go("register")}
-                style={{ minHeight: 38, padding: "0 16px", minWidth: 0, fontSize: 13, cursor: "pointer" }}
-              >
-                <UserPlus size={15} />
-                <span>Register</span>
-              </button>
-            </div>
-          </SignedOut>
-        </>
-      ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button
-            className="secondary-action"
-            type="button"
-            onClick={() => go("login")}
-            style={{ minHeight: 38, padding: "0 14px", fontSize: 13, cursor: "pointer" }}
-          >
-            <LogIn size={15} />
-            <span>Sign In</span>
-          </button>
-          <button
-            className="primary-action"
-            type="button"
-            onClick={() => go("register")}
-            style={{ minHeight: 38, padding: "0 16px", minWidth: 0, fontSize: 13, cursor: "pointer" }}
-          >
-            <UserPlus size={15} />
-            <span>Register</span>
-          </button>
-        </div>
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <button
+          className="secondary-action"
+          type="button"
+          onClick={() => go("login")}
+          style={{ minHeight: 38, padding: "0 14px", fontSize: 13, cursor: "pointer" }}
+        >
+          <LogIn size={15} />
+          <span>Sign In</span>
+        </button>
+        <button
+          className="primary-action"
+          type="button"
+          onClick={() => go("register")}
+          style={{ minHeight: 38, padding: "0 16px", minWidth: 0, fontSize: 13, cursor: "pointer" }}
+        >
+          <UserPlus size={15} />
+          <span>Register</span>
+        </button>
+      </div>
 
       <button
         className="menu-button"
