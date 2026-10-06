@@ -13,7 +13,14 @@ if (!PUBLISHABLE_KEY) {
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
+      signInUrl="/"
+      signUpUrl="/"
+      afterSignInUrl="/"
+      afterSignUpUrl="/"
+      afterSignOutUrl="/"
+    >
       <App />
     </ClerkProvider>
   </React.StrictMode>
