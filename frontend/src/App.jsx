@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { api } from "./api";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
@@ -7,8 +8,45 @@ import { AuthPage } from "./pages/AuthPage";
 import { Home } from "./pages/Home";
 import { ResourcePage } from "./pages/ResourcePage";
 
+// Clerk uses these hash paths during OAuth and MFA flows
+const CLERK_HASHES = [
+  "/sso-callback",
+  "/continue",
+  "/verify",
+  "/factor-one",
+  "/factor-two",
+  "/reset-password",
+];
+
+function isClerkHash() {
+  const hash = window.location.hash.replace(/^#/, "");
+  return CLERK_HASHES.some((h) => hash.startsWith(h));
+}
+
+// Navigates to home as soon as Clerk establishes a session on the auth pages
+function AuthRedirect({ page, go }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const navigated = useRef(false);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isSignedIn && (page === "login" || page === "register")) {
+      if (!navigated.current) {
+        navigated.current = true;
+        go("home");
+      }
+    } else if (!isSignedIn) {
+      navigated.current = false;
+    }
+  }, [isLoaded, isSignedIn, page, go]);
+
+  return null;
+}
+
 export function App() {
-  const [page, setPage] = useState("home");
+  // Start on "login" if the app is loaded mid OAuth callback so
+  // <SignIn routing="hash"> is mounted to process #/sso-callback
+  const [page, setPage] = useState(() => (isClerkHash() ? "login" : "home"));
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [notice, setNotice] = useState("");
@@ -27,13 +65,15 @@ export function App() {
 
   useEffect(() => {
     const onPopState = (event) => {
+      // Don't interfere while Clerk is handling its hash flow
+      if (isClerkHash()) return;
       setPage(event.state?.rkhubPage || "home");
       setMenu(false);
       setNotice("");
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    if (!window.history.state?.rkhubPage) {
+    if (!window.history.state?.rkhubPage && !isClerkHash()) {
       window.history.replaceState({ rkhubPage: "home" }, "");
     }
 
@@ -47,10 +87,8 @@ export function App() {
       setNotice("Type what you need first.");
       return;
     }
-
     setPrompt("");
     setNotice("Searching RKhub resources with AI...");
-
     try {
       const result = await api.chat(query);
       setAiResult(result);
@@ -63,6 +101,7 @@ export function App() {
 
   return (
     <div className="app-shell">
+      <AuthRedirect page={page} go={go} />
       <Header page={page} menu={menu} setMenu={setMenu} go={go} />
       {page === "home" ? (
         <Home

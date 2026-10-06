@@ -12,6 +12,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { API_URL, api } from "../api";
 
 function formatFileSize(bytes) {
@@ -49,8 +50,8 @@ export function ResourcePdfList({
   onUploaded,
   onBack,
 }) {
-  const user = null;
-  const getToken = null;
+  const { user } = useUser();
+  const { getToken } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showUpload, setShowUpload] = useState(false);

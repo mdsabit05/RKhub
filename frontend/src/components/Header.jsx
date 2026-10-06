@@ -1,5 +1,42 @@
 import React from "react";
-import { GraduationCap, LogIn, Menu, UserPlus, X } from "lucide-react";
+import { GraduationCap, LogIn, LogOut, Menu, UserPlus, X } from "lucide-react";
+import { SignedIn, SignedOut, useClerk, useUser } from "@clerk/clerk-react";
+
+function UserNav({ go }) {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const name = user?.firstName || user?.username || "Account";
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <button
+        className="secondary-action"
+        type="button"
+        onClick={() => go("account")}
+        style={{ minHeight: 36, padding: "0 13px", fontSize: 13, cursor: "pointer" }}
+      >
+        {name}
+      </button>
+      <button
+        className="secondary-action"
+        type="button"
+        onClick={() => signOut(() => go("home"))}
+        style={{
+          minHeight: 36,
+          padding: "0 13px",
+          fontSize: 13,
+          cursor: "pointer",
+          color: "#b42318",
+          borderColor: "#fecdd3",
+          background: "#fff5f5",
+        }}
+      >
+        <LogOut size={14} />
+        <span>Sign Out</span>
+      </button>
+    </div>
+  );
+}
 
 export function Header({ page, menu, setMenu, go }) {
   return (
@@ -10,9 +47,7 @@ export function Header({ page, menu, setMenu, go }) {
         </div>
         <div>
           <div className="brand-name">RKhub</div>
-          <div className="brand-subtitle">
-            Rajkumar College of IT and Management
-          </div>
+          <div className="brand-subtitle">Rajkumar College of IT and Management</div>
         </div>
       </button>
 
@@ -25,7 +60,11 @@ export function Header({ page, menu, setMenu, go }) {
           Home
         </button>
         <button
-          className={`nav-link ${page !== "home" && page !== "admin" && page !== "login" && page !== "register" ? "active" : ""}`}
+          className={`nav-link ${
+            page !== "home" && page !== "admin" && page !== "login" && page !== "register" && page !== "account"
+              ? "active"
+              : ""
+          }`}
           onClick={() => go("notes")}
           type="button"
         >
@@ -39,36 +78,50 @@ export function Header({ page, menu, setMenu, go }) {
           Admin
         </button>
 
-        <div style={{ display: "none" }} className="mobile-auth-links">
-          <button className="nav-link" onClick={() => go("login")} type="button">
-            Sign In
-          </button>
-          <button className="nav-link" onClick={() => go("register")} type="button">
-            Register
-          </button>
+        {/* Mobile auth links inside drawer */}
+        <div className="mobile-auth-links" style={{ display: "none" }}>
+          <SignedIn>
+            <button className="nav-link" onClick={() => go("account")} type="button">
+              My Account
+            </button>
+          </SignedIn>
+          <SignedOut>
+            <button className="nav-link" onClick={() => go("login")} type="button">
+              Sign In
+            </button>
+            <button className="nav-link" onClick={() => go("register")} type="button">
+              Register
+            </button>
+          </SignedOut>
         </div>
       </nav>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button
-          className="secondary-action"
-          type="button"
-          onClick={() => go("login")}
-          style={{ minHeight: 38, padding: "0 14px", fontSize: 13, cursor: "pointer" }}
-        >
-          <LogIn size={15} />
-          <span>Sign In</span>
-        </button>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={() => go("register")}
-          style={{ minHeight: 38, padding: "0 16px", minWidth: 0, fontSize: 13, cursor: "pointer" }}
-        >
-          <UserPlus size={15} />
-          <span>Register</span>
-        </button>
-      </div>
+      {/* Desktop auth area */}
+      <SignedIn>
+        <UserNav go={go} />
+      </SignedIn>
+      <SignedOut>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={() => go("login")}
+            style={{ minHeight: 38, padding: "0 14px", fontSize: 13, cursor: "pointer" }}
+          >
+            <LogIn size={15} />
+            <span>Sign In</span>
+          </button>
+          <button
+            className="primary-action"
+            type="button"
+            onClick={() => go("register")}
+            style={{ minHeight: 38, padding: "0 16px", minWidth: 0, fontSize: 13, cursor: "pointer" }}
+          >
+            <UserPlus size={15} />
+            <span>Register</span>
+          </button>
+        </div>
+      </SignedOut>
 
       <button
         className="menu-button"
