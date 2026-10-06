@@ -8,20 +8,21 @@ import { AuthPage } from "./pages/AuthPage";
 import { Home } from "./pages/Home";
 import { ResourcePage } from "./pages/ResourcePage";
 
-// Clerk uses these hash paths during OAuth and MFA flows
+// Clerk v6 uses #sign-up/... (no leading slash); v5 used #/sign-up/...
+// Strip both # and optional leading / before matching.
 const CLERK_HASHES = [
-  "/sso-callback",
-  "/continue",
-  "/verify",
-  "/factor-one",
-  "/factor-two",
-  "/reset-password",
-  "/sign-in",
-  "/sign-up",
+  "sso-callback",
+  "continue",
+  "verify",
+  "factor-one",
+  "factor-two",
+  "reset-password",
+  "sign-in",
+  "sign-up",
 ];
 
 function isClerkHash() {
-  const hash = window.location.hash.replace(/^#/, "");
+  const hash = window.location.hash.replace(/^#\/?/, "");
   return CLERK_HASHES.some((h) => hash.startsWith(h));
 }
 
@@ -46,12 +47,11 @@ function AuthRedirect({ page, go }) {
 }
 
 export function App() {
-  // Start on "login" if the app is loaded mid OAuth callback so
-  // <SignIn routing="hash"> is mounted to process #/sso-callback
+  // Start on "register" if mid sign-up flow, "login" for other Clerk callbacks
   const [page, setPage] = useState(() => {
     if (!isClerkHash()) return "home";
-    const hash = window.location.hash.replace(/^#/, "");
-    return hash.startsWith("/sign-up") ? "register" : "login";
+    const hash = window.location.hash.replace(/^#\/?/, "");
+    return hash.startsWith("sign-up") ? "register" : "login";
   });
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
