@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { api } from "./api";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
@@ -7,7 +8,27 @@ import { AuthPage } from "./pages/AuthPage";
 import { Home } from "./pages/Home";
 import { ResourcePage } from "./pages/ResourcePage";
 
-export function App({ hasClerkKey }) {
+// Watches Clerk's auth state and navigates away from auth pages once signed in
+function ClerkAuthHandler({ page, go }) {
+  const { isSignedIn, isLoaded } = useAuth();
+  const didNavigate = useRef(false);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isSignedIn && (page === "login" || page === "register") && !didNavigate.current) {
+      didNavigate.current = true;
+      go("home");
+    }
+    if (!isSignedIn) {
+      didNavigate.current = false;
+    }
+  }, [isSignedIn, isLoaded, page, go]);
+
+  return null;
+}
+
+export function App() {
+  const hasClerkKey = true; // ClerkProvider is always mounted (see main.jsx)
   const CLERK_HASHES = ["/sso-callback", "/continue", "/verify", "/factor-one", "/factor-two", "/reset-password"];
   const isClerkHash = () => CLERK_HASHES.some((h) => window.location.hash.replace(/^#/, "").startsWith(h));
 
@@ -76,6 +97,7 @@ export function App({ hasClerkKey }) {
 
   return (
     <div className="app-shell">
+      <ClerkAuthHandler page={page} go={go} />
       <Header
         page={page}
         menu={menu}

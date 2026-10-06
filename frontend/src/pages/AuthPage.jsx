@@ -225,7 +225,12 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
                 </>
               ) : mode === "login" ? (
                 <>
-                  <SignIn routing="hash" appearance={clerkAppearance} />
+                  <SignIn
+                    routing="hash"
+                    afterSignInUrl="/"
+                    fallbackRedirectUrl="/"
+                    appearance={clerkAppearance}
+                  />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Don't have an account?{" "}
                     <button onClick={() => go("register")} type="button"
@@ -236,7 +241,13 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
                 </>
               ) : (
                 <>
-                  <SignUp routing="hash" appearance={clerkAppearance} />
+                  <SignUp
+                    routing="hash"
+                    afterSignUpUrl="/"
+                    afterSignInUrl="/"
+                    fallbackRedirectUrl="/"
+                    appearance={clerkAppearance}
+                  />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Already have an account?{" "}
                     <button onClick={() => go("login")} type="button"
