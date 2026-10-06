@@ -225,36 +225,22 @@ export function AuthPage({ mode = "login", go, hasClerkKey }) {
                 </>
               ) : mode === "login" ? (
                 <>
-                  <SignIn
-                    routing="virtual"
-                    appearance={clerkAppearance}
-                    signUpUrl="https://rkhub.pages.dev"
-                  />
+                  <SignIn routing="hash" appearance={clerkAppearance} />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Don't have an account?{" "}
-                    <button
-                      onClick={() => go("register")}
-                      type="button"
-                      style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 13.5 }}
-                    >
+                    <button onClick={() => go("register")} type="button"
+                      style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 13.5 }}>
                       Register
                     </button>
                   </p>
                 </>
               ) : (
                 <>
-                  <SignUp
-                    routing="virtual"
-                    appearance={clerkAppearance}
-                    signInUrl="https://rkhub.pages.dev"
-                  />
+                  <SignUp routing="hash" appearance={clerkAppearance} />
                   <p style={{ fontSize: 13.5, color: "#64748b", margin: 0 }}>
                     Already have an account?{" "}
-                    <button
-                      onClick={() => go("login")}
-                      type="button"
-                      style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 13.5 }}
-                    >
+                    <button onClick={() => go("login")} type="button"
+                      style={{ color: "#0f766e", fontWeight: 700, background: "none", border: 0, cursor: "pointer", fontSize: 13.5 }}>
                       Sign In
                     </button>
                   </p>

@@ -8,7 +8,12 @@ import { Home } from "./pages/Home";
 import { ResourcePage } from "./pages/ResourcePage";
 
 export function App({ hasClerkKey }) {
-  const [page, setPage] = useState("home");
+  const CLERK_HASHES = ["/sso-callback", "/continue", "/verify", "/factor-one", "/factor-two", "/reset-password"];
+  const isClerkHash = () => CLERK_HASHES.some((h) => window.location.hash.replace(/^#/, "").startsWith(h));
+
+  // If the page loads mid Clerk OAuth flow, show the login page so
+  // <SignIn routing="hash"> is mounted and can process #/sso-callback
+  const [page, setPage] = useState(() => isClerkHash() ? "login" : "home");
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [notice, setNotice] = useState("");
@@ -26,13 +31,6 @@ export function App({ hasClerkKey }) {
   };
 
   useEffect(() => {
-    const CLERK_HASHES = ["/sso-callback", "/continue", "/verify", "/factor-one", "/factor-two", "/reset-password", "/sign-in", "/sign-up"];
-
-    const isClerkHash = () => {
-      const hash = window.location.hash.replace(/^#/, "");
-      return CLERK_HASHES.some((h) => hash.startsWith(h));
-    };
-
     const onPopState = (event) => {
       // Ignore Clerk's internal hash routing — let ClerkProvider handle it
       if (isClerkHash()) return;
