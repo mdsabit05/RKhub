@@ -48,7 +48,11 @@ function AuthRedirect({ page, go }) {
 export function App() {
   // Start on "login" if the app is loaded mid OAuth callback so
   // <SignIn routing="hash"> is mounted to process #/sso-callback
-  const [page, setPage] = useState(() => (isClerkHash() ? "login" : "home"));
+  const [page, setPage] = useState(() => {
+    if (!isClerkHash()) return "home";
+    const hash = window.location.hash.replace(/^#/, "");
+    return hash.startsWith("/sign-up") ? "register" : "login";
+  });
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [notice, setNotice] = useState("");
