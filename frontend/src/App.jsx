@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useAuth } from "@clerk/react";
+import React, { useEffect, useState } from "react";
 import { api } from "./api";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
@@ -8,50 +7,9 @@ import { AuthPage } from "./pages/AuthPage";
 import { Home } from "./pages/Home";
 import { ResourcePage } from "./pages/ResourcePage";
 
-// Clerk v6 uses #sign-up/... (no leading slash); v5 used #/sign-up/...
-// Strip both # and optional leading / before matching.
-const CLERK_HASHES = [
-  "sso-callback",
-  "continue",
-  "verify",
-  "factor-one",
-  "factor-two",
-  "reset-password",
-  "sign-in",
-  "sign-up",
-];
-
-function isClerkHash() {
-  const hash = window.location.hash.replace(/^#\/?/, "");
-  return CLERK_HASHES.some((h) => hash.startsWith(h));
-}
-
-// Navigates to home as soon as Clerk establishes a session on the auth pages
-function AuthRedirect({ page, go }) {
-  const { isLoaded, isSignedIn } = useAuth();
-  const navigated = useRef(false);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (isSignedIn && (page === "login" || page === "register")) {
-      if (!navigated.current) {
-        navigated.current = true;
-        go("home");
-      }
-    } else if (!isSignedIn) {
-      navigated.current = false;
-    }
-  }, [isLoaded, isSignedIn, page, go]);
-
-  return null;
-}
-
 export function App() {
-  // Start on "register" if mid sign-up flow, "login" for other Clerk callbacks
   const [page, setPage] = useState(() => {
-    if (!isClerkHash()) return "home";
-    const hash = window.location.hash.replace(/^#\/?/, "");
-    return hash.startsWith("sign-up") ? "register" : "login";
+    return window.history.state?.rkhubPage || "home";
   });
   const [menu, setMenu] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -71,15 +29,13 @@ export function App() {
 
   useEffect(() => {
     const onPopState = (event) => {
-      // Don't interfere while Clerk is handling its hash flow
-      if (isClerkHash()) return;
       setPage(event.state?.rkhubPage || "home");
       setMenu(false);
       setNotice("");
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    if (!window.history.state?.rkhubPage && !isClerkHash()) {
+    if (!window.history.state?.rkhubPage) {
       window.history.replaceState({ rkhubPage: "home" }, "");
     }
 
@@ -107,7 +63,6 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <AuthRedirect page={page} go={go} />
       <Header page={page} menu={menu} setMenu={setMenu} go={go} />
       {page === "home" ? (
         <Home

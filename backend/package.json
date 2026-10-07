@@ -12,8 +12,8 @@
     "test": "tsx test-e2e.mjs"
   },
   "dependencies": {
-    "@clerk/backend": "^3.23.0",
     "@hono/node-server": "^1.19.17",
+    "better-auth": "^1.7.7",
     "dotenv": "^16.4.7",
     "hono": "^4.6.15",
     "openai": "^7.27.0",

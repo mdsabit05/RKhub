@@ -6,6 +6,7 @@ import admin from "./routes/admin.js";
 import resources from "./routes/resources.js";
 import askRouter from "./routes/ask.js";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { auth } from "./auth.js";
 
 const app = new Hono();
 
@@ -21,7 +22,7 @@ app.use("*", cors({
     return process.env.CORS_ORIGIN ?? "*";
   },
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization", "x-admin-key"],
+  allowHeaders: ["Content-Type", "Authorization", "x-admin-key", "Cookie"],
   credentials: true,
 }));
 app.use(
@@ -30,6 +31,9 @@ app.use(
     root: "./public",
   })
 );
+
+// Better Auth API routes
+app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.get("/", (c) => c.json({
   name: "RKhub API",

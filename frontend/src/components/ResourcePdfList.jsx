@@ -12,7 +12,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useAuth, useUser } from "@clerk/react";
+import { useSession } from "../lib/auth-client";
 import { API_URL, api } from "../api";
 
 function formatFileSize(bytes) {
@@ -50,8 +50,8 @@ export function ResourcePdfList({
   onUploaded,
   onBack,
 }) {
-  const { user } = useUser();
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showUpload, setShowUpload] = useState(false);
@@ -108,15 +108,7 @@ export function ResourcePdfList({
       formData.append("title", uploadTitle.trim() || defaultTitle);
       formData.append("file", uploadFile);
 
-      let token = null;
-      try {
-        if (getToken) {
-          token = await getToken();
-        }
-      } catch {
-        // Clerk token fallback
-      }
-
+      const token = session?.session?.token || null;
       await api.uploadResource(formData, token);
 
       setStatusMessage("PDF uploaded successfully!");
@@ -141,15 +133,7 @@ export function ResourcePdfList({
       setIsDeleting(true);
       setDeleteError("");
 
-      let token = null;
-      try {
-        if (getToken) {
-          token = await getToken();
-        }
-      } catch {
-        // token fallback
-      }
-
+      const token = session?.session?.token || null;
       await api.deleteResource(deletingResource.id, token);
 
       setStatusMessage(`"${deletingResource.title}" was permanently removed.`);
@@ -386,7 +370,7 @@ export function ResourcePdfList({
                     const isOwner = Boolean(user && res.uploadedBy && res.uploadedBy === user.id);
                     const uploaderDisplay =
                       res.uploaderName ||
-                      (isOwner ? user.firstName || "You" : res.uploadedBy ? "Student" : "RKhub College");
+                      (isOwner ? user.name || "You" : res.uploadedBy ? "Student" : "RKhub College");
 
                     return (
                       <tr key={res.id} className="pdf-table-row">
@@ -471,7 +455,7 @@ export function ResourcePdfList({
                 const isOwner = Boolean(user && res.uploadedBy && res.uploadedBy === user.id);
                 const uploaderDisplay =
                   res.uploaderName ||
-                  (isOwner ? user.firstName || "You" : res.uploadedBy ? "Student" : "RKhub College");
+                  (isOwner ? user.name || "You" : res.uploadedBy ? "Student" : "RKhub College");
 
                 return (
                   <div key={res.id} className="pdf-card-mobile">
