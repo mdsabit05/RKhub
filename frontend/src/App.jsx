@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { api } from "./api";
+import { getSession } from "./lib/auth-client";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { AdminPage } from "./pages/AdminPage";
@@ -15,6 +16,20 @@ export function App() {
   const [prompt, setPrompt] = useState("");
   const [notice, setNotice] = useState("");
   const [aiResult, setAiResult] = useState(null);
+
+  // Sync session on mount (essential for Google OAuth return)
+  useEffect(() => {
+    getSession()
+      .then((res) => {
+        if (res?.data?.token) {
+          localStorage.setItem("rkhub_auth_token", res.data.token);
+        }
+        if (res?.data?.user) {
+          localStorage.setItem("rkhub_user", JSON.stringify(res.data.user));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const go = (nextPage) => {
     if (nextPage !== page) {

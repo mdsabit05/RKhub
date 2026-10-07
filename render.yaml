@@ -18,6 +18,10 @@ services:
         generateValue: true
       - key: BETTER_AUTH_URL
         value: https://rkhub-4jne.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       - key: NVIDIA_API_KEY
         sync: false                       # set manually in Render dashboard
 
