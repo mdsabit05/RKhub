@@ -16,10 +16,13 @@ app.use("*", cors({
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       return origin;
     }
+    if (origin.endsWith(".pages.dev") || origin === "https://rkhub.pages.dev") {
+      return origin;
+    }
     if (process.env.CORS_ORIGIN && origin === process.env.CORS_ORIGIN) {
       return origin;
     }
-    return process.env.CORS_ORIGIN ?? "*";
+    return origin;
   },
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "x-admin-key", "Cookie"],
@@ -33,7 +36,14 @@ app.use(
 );
 
 // Better Auth API routes
-app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
+app.all("/api/auth/*", async (c) => {
+  try {
+    return await auth.handler(c.req.raw);
+  } catch (err: any) {
+    console.error("[BetterAuth handler error]:", err);
+    return c.json({ error: err?.message || "Internal auth error" }, 500);
+  }
+});
 
 app.get("/", (c) => c.json({
   name: "RKhub API",

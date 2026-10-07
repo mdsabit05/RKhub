@@ -3,16 +3,24 @@ import { betterAuth } from "better-auth";
 import { bearer } from "better-auth/plugins";
 import { pool } from "./db.js";
 
+const baseURL =
+  process.env.BETTER_AUTH_URL ||
+  process.env.RENDER_EXTERNAL_URL ||
+  "http://localhost:8787";
+
 const trustedOrigins = [
+  "https://rkhub.pages.dev",
+  "https://*.pages.dev",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:3000",
   process.env.CORS_ORIGIN,
+  process.env.FRONTEND_URL,
 ].filter(Boolean) as string[];
 
 export const auth = betterAuth({
   database: pool,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:8787",
+  baseURL,
   secret: process.env.BETTER_AUTH_SECRET || "rkhub-better-auth-secret-key-32chars-min-change-in-production",
   user: {
     modelName: "users",
@@ -22,6 +30,12 @@ export const auth = betterAuth({
     requireEmailVerification: false,
   },
   trustedOrigins,
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+    },
+  },
   plugins: [
     bearer(),
   ],

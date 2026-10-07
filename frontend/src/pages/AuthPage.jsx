@@ -48,12 +48,14 @@ export function AuthPage({ mode = "login", go }) {
       });
 
       if (result.error) {
-        setError(result.error.message || "Sign in failed. Check your email and password.");
+        console.error("Sign-in error:", result.error);
+        setError(result.error.message || result.error.statusText || "Sign in failed. Check your email and password.");
       } else {
         setSuccess("Signed in successfully!");
         setTimeout(() => go("home"), 300);
       }
     } catch (err) {
+      console.error("Sign-in exception:", err);
       setError(err?.message || "Sign in failed. Please try again.");
     } finally {
       setLoading(false);
@@ -95,12 +97,14 @@ export function AuthPage({ mode = "login", go }) {
       });
 
       if (result.error) {
-        setError(result.error.message || "Registration failed. Please try again.");
+        console.error("Registration error:", result.error);
+        setError(result.error.message || result.error.statusText || "Registration failed. Please try again.");
       } else {
         setSuccess("Account created successfully!");
         setTimeout(() => go("home"), 300);
       }
     } catch (err) {
+      console.error("Registration exception:", err);
       setError(err?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
