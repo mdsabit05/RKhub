@@ -1,9 +1,8 @@
 import React from "react";
-import { GraduationCap, LogIn, LogOut, Menu, User, UserPlus, X } from "lucide-react";
+import { GraduationCap, LogIn, LogOut, Menu, UserPlus, X } from "lucide-react";
 import { useSession, signOut } from "../lib/auth-client";
 
 function UserNav({ user, go }) {
-  const name = user?.name || user?.email?.split("@")[0] || "Account";
 
   const handleSignOut = async () => {
     try {
@@ -18,16 +17,6 @@ function UserNav({ user, go }) {
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <button
-        className="secondary-action"
-        type="button"
-        onClick={() => go("account")}
-        style={{ minHeight: 36, padding: "0 13px", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-        title={user?.email || ""}
-      >
-        <User size={14} />
-        <span>{name}</span>
-      </button>
       <button
         className="secondary-action"
         type="button"
