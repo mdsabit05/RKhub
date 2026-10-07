@@ -48,11 +48,12 @@ export const api = {
     }),
   uploadResource: (formData, token) => {
     const headers = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    const authToken = token || localStorage.getItem("rkhub_auth_token");
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
     }
     const adminKey = sessionStorage.getItem("rkhub_admin_key");
-    if (adminKey && !token) {
+    if (adminKey && !authToken) {
       headers["x-admin-key"] = adminKey;
     }
     return request("/api/resources/upload", {
@@ -63,8 +64,9 @@ export const api = {
   },
   deleteResource: (id, token) => {
     const headers = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    const authToken = token || localStorage.getItem("rkhub_auth_token");
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
     }
     return request(`/api/resources/${id}`, {
       method: "DELETE",

@@ -51,7 +51,14 @@ export function ResourcePdfList({
   onBack,
 }) {
   const { data: session } = useSession();
-  const user = session?.user;
+  const cachedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("rkhub_user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const user = session?.user || cachedUser;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showUpload, setShowUpload] = useState(false);
@@ -108,7 +115,7 @@ export function ResourcePdfList({
       formData.append("title", uploadTitle.trim() || defaultTitle);
       formData.append("file", uploadFile);
 
-      const token = session?.session?.token || null;
+      const token = session?.session?.token || localStorage.getItem("rkhub_auth_token") || null;
       await api.uploadResource(formData, token);
 
       setStatusMessage("PDF uploaded successfully!");
@@ -133,7 +140,7 @@ export function ResourcePdfList({
       setIsDeleting(true);
       setDeleteError("");
 
-      const token = session?.session?.token || null;
+      const token = session?.session?.token || localStorage.getItem("rkhub_auth_token") || null;
       await api.deleteResource(deletingResource.id, token);
 
       setStatusMessage(`"${deletingResource.title}" was permanently removed.`);

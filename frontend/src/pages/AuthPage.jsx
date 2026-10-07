@@ -51,8 +51,14 @@ export function AuthPage({ mode = "login", go }) {
         console.error("Sign-in error:", result.error);
         setError(result.error.message || result.error.statusText || "Sign in failed. Check your email and password.");
       } else {
+        if (result.data?.token) {
+          localStorage.setItem("rkhub_auth_token", result.data.token);
+        }
+        if (result.data?.user) {
+          localStorage.setItem("rkhub_user", JSON.stringify(result.data.user));
+        }
         setSuccess("Signed in successfully!");
-        setTimeout(() => go("home"), 300);
+        setTimeout(() => go("home"), 200);
       }
     } catch (err) {
       console.error("Sign-in exception:", err);
@@ -100,8 +106,14 @@ export function AuthPage({ mode = "login", go }) {
         console.error("Registration error:", result.error);
         setError(result.error.message || result.error.statusText || "Registration failed. Please try again.");
       } else {
+        if (result.data?.token) {
+          localStorage.setItem("rkhub_auth_token", result.data.token);
+        }
+        if (result.data?.user) {
+          localStorage.setItem("rkhub_user", JSON.stringify(result.data.user));
+        }
         setSuccess("Account created successfully!");
-        setTimeout(() => go("home"), 300);
+        setTimeout(() => go("home"), 200);
       }
     } catch (err) {
       console.error("Registration exception:", err);
@@ -114,6 +126,8 @@ export function AuthPage({ mode = "login", go }) {
   const handleSignOut = async () => {
     try {
       setLoading(true);
+      localStorage.removeItem("rkhub_auth_token");
+      localStorage.removeItem("rkhub_user");
       await signOut();
       go("home");
     } catch (err) {

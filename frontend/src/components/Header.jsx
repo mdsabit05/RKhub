@@ -7,6 +7,8 @@ function UserNav({ user, go }) {
 
   const handleSignOut = async () => {
     try {
+      localStorage.removeItem("rkhub_auth_token");
+      localStorage.removeItem("rkhub_user");
       await signOut();
     } catch (err) {
       console.error("Sign out error:", err);
@@ -52,10 +54,19 @@ function UserNav({ user, go }) {
 
 export function Header({ page, menu, setMenu, go }) {
   const { data: session } = useSession();
-  const user = session?.user;
+  const cachedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("rkhub_user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const user = session?.user || cachedUser;
 
   const handleSignOut = async () => {
     try {
+      localStorage.removeItem("rkhub_auth_token");
+      localStorage.removeItem("rkhub_user");
       await signOut();
     } catch (err) {
       console.error("Sign out error:", err);

@@ -26,6 +26,7 @@ app.use("*", cors({
   },
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "x-admin-key", "Cookie"],
+  exposeHeaders: ["set-auth-token"],
   credentials: true,
 }));
 app.use(
