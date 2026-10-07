@@ -1,45 +1,6 @@
 import React from "react";
-import { GraduationCap, LogIn, LogOut, Menu, UserPlus, X } from "lucide-react";
-import { useSession, signOut } from "../lib/auth-client";
-
-function UserNav({ user, go }) {
-
-  const handleSignOut = async () => {
-    try {
-      localStorage.removeItem("rkhub_auth_token");
-      localStorage.removeItem("rkhub_user");
-      await signOut();
-    } catch (err) {
-      console.error("Sign out error:", err);
-    }
-    go("home");
-  };
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <button
-        className="secondary-action"
-        type="button"
-        onClick={handleSignOut}
-        style={{
-          minHeight: 36,
-          padding: "0 13px",
-          fontSize: 13,
-          cursor: "pointer",
-          color: "#b42318",
-          borderColor: "#fecdd3",
-          background: "#fff5f5",
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
-        <LogOut size={14} />
-        <span>Sign Out</span>
-      </button>
-    </div>
-  );
-}
+import { GraduationCap, LogIn, Menu, UserPlus, X } from "lucide-react";
+import { useSession } from "../lib/auth-client";
 
 export function Header({ page, menu, setMenu, go }) {
   const { data: session } = useSession();
@@ -51,18 +12,6 @@ export function Header({ page, menu, setMenu, go }) {
     }
   })();
   const user = session?.user || cachedUser;
-
-  const handleSignOut = async () => {
-    try {
-      localStorage.removeItem("rkhub_auth_token");
-      localStorage.removeItem("rkhub_user");
-      await signOut();
-    } catch (err) {
-      console.error("Sign out error:", err);
-    }
-    setMenu(false);
-    go("home");
-  };
 
   return (
     <header className="header">
@@ -106,14 +55,9 @@ export function Header({ page, menu, setMenu, go }) {
         {/* Mobile auth links inside drawer */}
         <div className="mobile-auth-links">
           {user ? (
-            <>
-              <button className="nav-link" onClick={() => go("account")} type="button">
-                My Account ({user.name || user.email})
-              </button>
-              <button className="nav-link" onClick={handleSignOut} type="button" style={{ color: "#b42318" }}>
-                Sign Out
-              </button>
-            </>
+            <button className="nav-link" onClick={() => go("account")} type="button">
+              My Account ({user.name || user.email})
+            </button>
           ) : (
             <>
               <button className="nav-link" onClick={() => go("login")} type="button">
@@ -129,9 +73,7 @@ export function Header({ page, menu, setMenu, go }) {
 
       {/* Desktop auth area */}
       <div className="desktop-auth-area">
-        {user ? (
-          <UserNav user={user} go={go} />
-        ) : (
+        {user ? null : (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               className="secondary-action"
