@@ -334,6 +334,60 @@ export function AuthPage({ mode = "login", go }) {
                   </div>
                 </div>
 
+                <div
+                  style={{
+                    background: "#f0fdfa",
+                    border: "1px solid #99f6e4",
+                    borderRadius: 12,
+                    padding: "14px 16px",
+                    marginBottom: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 10,
+                        background: "#0f766e",
+                        color: "#fff",
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "#115e59" }}>
+                        Admin Portal
+                      </div>
+                      <div style={{ fontSize: 12, color: "#0d9488" }}>
+                        Manage & delete all uploaded PDFs
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => go("admin")}
+                    className="primary-action"
+                    style={{
+                      minHeight: 36,
+                      padding: "0 14px",
+                      fontSize: 13,
+                      fontWeight: 650,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Enter Admin
+                  </button>
+                </div>
+
                 <div style={{ display: "grid", gap: 10 }}>
                   <button
                     type="button"

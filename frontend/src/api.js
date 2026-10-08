@@ -46,6 +46,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key }),
     }),
+  getAdminResources: (adminKey) => {
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
+    return request("/api/admin/resources", {
+      headers: key ? { "x-admin-key": key } : {},
+    });
+  },
   uploadResource: (formData, token) => {
     const headers = {};
     const authToken = token || localStorage.getItem("rkhub_auth_token");
@@ -62,15 +68,26 @@ export const api = {
       body: formData,
     });
   },
-  deleteResource: (id, token) => {
+  deleteResource: (id, token, adminKey) => {
     const headers = {};
     const authToken = token || localStorage.getItem("rkhub_auth_token");
     if (authToken) {
       headers["Authorization"] = `Bearer ${authToken}`;
     }
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
+    if (key) {
+      headers["x-admin-key"] = key;
+    }
     return request(`/api/resources/${id}`, {
       method: "DELETE",
       headers,
+    });
+  },
+  adminDeleteResource: (id, adminKey) => {
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
+    return request(`/api/admin/resources/${id}`, {
+      method: "DELETE",
+      headers: key ? { "x-admin-key": key } : {},
     });
   },
   chat: (message, context = {}) =>

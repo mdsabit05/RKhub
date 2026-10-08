@@ -395,8 +395,11 @@ resources.delete("/:id", async (c) => {
   }
 
   const user = await authenticateUser(c);
-  if (!user) {
-    return c.json({ error: "Unauthorized: Please sign in to delete this resource." }, 401);
+  const adminKey = c.req.header("x-admin-key");
+  const hasAdmin = isValidAdminKey(adminKey);
+
+  if (!user && !hasAdmin) {
+    return c.json({ error: "Unauthorized: Please sign in or provide admin key to delete this resource." }, 401);
   }
 
   const rows = await query(
@@ -412,9 +415,11 @@ resources.delete("/:id", async (c) => {
 
   const resource = rows[0];
 
-  // ONLY uploader can delete their own resource
-  if (!resource.uploadedBy || resource.uploadedBy !== user.id) {
-    return c.json({ error: "You can only delete resources uploaded by you." }, 403);
+  // If not admin, enforce ownership check
+  if (!hasAdmin) {
+    if (!resource.uploadedBy || !user || resource.uploadedBy !== user.id) {
+      return c.json({ error: "You can only delete resources uploaded by you." }, 403);
+    }
   }
 
   // Delete file from storage (Backblaze B2 or local) first

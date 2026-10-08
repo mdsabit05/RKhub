@@ -1,5 +1,4 @@
-import React from "react";
-import { GraduationCap, LogIn, Menu, UserPlus, X } from "lucide-react";
+import { GraduationCap, LogIn, Menu, User, UserPlus, X } from "lucide-react";
 import { useSession } from "../lib/auth-client";
 
 export function Header({ page, menu, setMenu, go }) {
@@ -44,14 +43,6 @@ export function Header({ page, menu, setMenu, go }) {
         >
           Resources
         </button>
-        <button
-          className={`nav-link ${page === "admin" ? "active" : ""}`}
-          onClick={() => go("admin")}
-          type="button"
-        >
-          Admin
-        </button>
-
         {/* Mobile auth links inside drawer */}
         <div className="mobile-auth-links">
           {user ? (
@@ -73,7 +64,25 @@ export function Header({ page, menu, setMenu, go }) {
 
       {/* Desktop auth area */}
       <div className="desktop-auth-area">
-        {user ? null : (
+        {user ? (
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={() => go("account")}
+            style={{
+              minHeight: 38,
+              padding: "0 14px",
+              fontSize: 13,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+            }}
+          >
+            <User size={15} />
+            <span>My Account</span>
+          </button>
+        ) : (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               className="secondary-action"
