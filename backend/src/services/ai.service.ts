@@ -94,7 +94,7 @@ const SUBJECT_SEARCH_TARGETS: Array<{ patterns: RegExp[]; searchTerms: string[] 
     searchTerms: ["%web technolog%"],
   },
   {
-    patterns: [/\b(ca|coa|computer\s*architecture)\b/i],
+    patterns: [/\b(ca|coa|computer\s*arch\w*)\b/i],
     searchTerms: ["%computer architecture%"],
   },
   {
@@ -148,7 +148,7 @@ function detectIntent(text: string): AcademicIntent {
 }
 
 function extractUnitNumber(text: string): number | null {
-  const unitMatch = text.match(/\b(?:unit|module|u)\s*[- ]?\s*([1-4])\b/i);
+  const unitMatch = text.match(/\b(?:unit|module|u)\s*[- ]?\s*([1-9]|10)\b/i);
   if (!unitMatch) return null;
   return Number(unitMatch[1]);
 }
@@ -232,9 +232,15 @@ async function findSubjectByName(
       .replace(/[^a-z0-9\s]/g, " ")
       .trim();
 
-    if (cleanSearch.length >= 2) {
-      params.push(`%${cleanSearch}%`);
-      conditions.push(`(LOWER(s.name) LIKE $${params.length} OR LOWER(s.code) LIKE $${params.length})`);
+    // Split into individual words (4+ chars) and match ANY of them
+    // This handles typos: "architechture" won't match but "computer" will still find "Computer Architecture"
+    const words = cleanSearch.split(/\s+/).filter((w) => w.length >= 4);
+    if (words.length > 0) {
+      const orClauses = words.map((word) => {
+        params.push(`%${word}%`);
+        return `(LOWER(s.name) LIKE $${params.length} OR LOWER(s.code) LIKE $${params.length})`;
+      });
+      conditions.push(`(${orClauses.join(" OR ")})`);
     } else {
       return null;
     }
