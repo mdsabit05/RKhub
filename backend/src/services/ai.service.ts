@@ -256,12 +256,59 @@ async function findSubjectByName(
     const andRows = await query(andSql, andParams);
     if (andRows[0]) return andRows[0];
 
-    // Pass 2: OR fallback — any word matches (handles typos like "architechture" → "computer" still matches)
+    // Pass 2: OR fallback — any word matches (handles typos where one word is correct)
+    const orParams: unknown[] = [...params];
+    const orConditions: string[] = [...conditions];
     const orClauses = words.map((word) => {
-      params.push(`%${word}%`);
-      return `LOWER(s.name) LIKE $${params.length}`;
+      orParams.push(`%${word}%`);
+      return `LOWER(s.name) LIKE $${orParams.length}`;
     });
-    conditions.push(`(${orClauses.join(" OR ")})`);
+    orConditions.push(`(${orClauses.join(" OR ")})`);
+
+    const orSql = `
+      SELECT s.id, s.code, s.name, s.year_no AS "yearNo", s.semester_no AS "semesterNo",
+             c.code AS "courseCode", c.name AS "courseName"
+      FROM subjects s
+      JOIN courses c ON c.id = s.course_id
+      WHERE ${orConditions.join(" AND ")}
+      ORDER BY s.display_order, s.code
+      LIMIT 1
+    `;
+    const orRows = await query(orSql, orParams);
+    if (orRows[0]) return orRows[0];
+
+    // Pass 3: Trigram fuzzy match — handles misspellings like "consitution" → "constitution"
+    try {
+      const fuzzyParams: unknown[] = [...params];
+      const fuzzyConditions: string[] = [...conditions];
+
+      // Push each word once; reuse the same $N index in both WHERE and ORDER BY
+      const wordParamIdxs = words.map((word) => {
+        fuzzyParams.push(word);
+        return fuzzyParams.length;
+      });
+
+      fuzzyConditions.push(
+        `(${wordParamIdxs.map((idx) => `word_similarity($${idx}, LOWER(s.name)) > 0.35`).join(" OR ")})`
+      );
+
+      const fuzzySql = `
+        SELECT s.id, s.code, s.name, s.year_no AS "yearNo", s.semester_no AS "semesterNo",
+               c.code AS "courseCode", c.name AS "courseName"
+        FROM subjects s
+        JOIN courses c ON c.id = s.course_id
+        WHERE ${fuzzyConditions.join(" AND ")}
+        ORDER BY (${wordParamIdxs.map((idx) => `word_similarity($${idx}, LOWER(s.name))`).join(" + ")}) DESC
+        LIMIT 1
+      `;
+      const fuzzyRows = await query(fuzzySql, fuzzyParams);
+      if (fuzzyRows[0]) return fuzzyRows[0];
+    } catch {
+      // pg_trgm not available, skip fuzzy pass
+    }
+
+    // No match found in any pass
+    return null;
   }
 
   if (course) {

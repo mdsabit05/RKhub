@@ -95,6 +95,9 @@ export async function ensureDatabaseSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_verification_identifier ON "verification"("identifier");
     `);
 
+    // Enable trigram extension for fuzzy subject name search (handles misspellings)
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm;`).catch(() => {});
+
     // Relax units.unit_no constraint from 1-4 to 1-10 so admins can add more units
     await pool.query(`
       DO $$
