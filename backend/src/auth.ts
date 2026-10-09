@@ -25,6 +25,13 @@ export const auth = betterAuth({
   user: {
     modelName: "users",
   },
+  account: {
+    storeStateStrategy: "database",
+    skipStateCookieCheck: true,
+  },
+  onAPIError: {
+    errorURL: "https://rkhub.pages.dev",
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,

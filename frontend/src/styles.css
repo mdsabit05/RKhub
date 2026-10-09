@@ -102,6 +102,10 @@ button {
   gap: 6px;
 }
 
+.mobile-auth-links {
+  display: none;
+}
+
 .nav-link {
   padding: 9px 15px;
   border-radius: 10px;

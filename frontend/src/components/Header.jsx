@@ -46,15 +46,36 @@ export function Header({ page, menu, setMenu, go }) {
         {/* Mobile auth links inside drawer */}
         <div className="mobile-auth-links">
           {user ? (
-            <button className="nav-link" onClick={() => go("account")} type="button">
-              My Account ({user.name || user.email})
+            <button
+              className="nav-link"
+              onClick={() => {
+                setMenu(false);
+                go("account");
+              }}
+              type="button"
+            >
+              My Account
             </button>
           ) : (
             <>
-              <button className="nav-link" onClick={() => go("login")} type="button">
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setMenu(false);
+                  go("login");
+                }}
+                type="button"
+              >
                 Sign In
               </button>
-              <button className="nav-link" onClick={() => go("register")} type="button">
+              <button
+                className="nav-link"
+                onClick={() => {
+                  setMenu(false);
+                  go("register");
+                }}
+                type="button"
+              >
                 Register
               </button>
             </>

@@ -39,7 +39,49 @@ app.use(
 // Better Auth API routes
 app.all("/api/auth/*", async (c) => {
   try {
-    return await auth.handler(c.req.raw);
+    const res = await auth.handler(c.req.raw);
+
+    // Enrich OAuth callback redirects for seamless cross-domain token delivery
+    if ((res.status === 302 || res.status === 307) && res.headers.has("location")) {
+      const location = res.headers.get("location") || "";
+      const setCookie = res.headers.get("set-cookie") || "";
+
+      // Extract session token from Set-Cookie header if present
+      const tokenMatch = setCookie.match(/better-auth\.session_token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      const frontendBase = process.env.CORS_ORIGIN || "https://rkhub.pages.dev";
+      let redirectTarget = location;
+
+      // Prevent error redirects from stranding users on raw backend JSON endpoint
+      if (
+        redirectTarget.startsWith("/") ||
+        redirectTarget.includes("onrender.com/?error") ||
+        redirectTarget.includes("localhost:8787/?error")
+      ) {
+        const query = redirectTarget.includes("?") ? redirectTarget.substring(redirectTarget.indexOf("?")) : "";
+        redirectTarget = `${frontendBase}/${query}`;
+      }
+
+      if (token) {
+        try {
+          const url = new URL(redirectTarget, frontendBase);
+          url.searchParams.set("token", token);
+          redirectTarget = url.toString();
+        } catch {
+          // keep redirectTarget
+        }
+      }
+
+      const headers = new Headers(res.headers);
+      headers.set("location", redirectTarget);
+      return new Response(null, {
+        status: res.status,
+        headers,
+      });
+    }
+
+    return res;
   } catch (err: any) {
     console.error("[BetterAuth handler error]:", err);
     return c.json({ error: err?.message || "Internal auth error" }, 500);

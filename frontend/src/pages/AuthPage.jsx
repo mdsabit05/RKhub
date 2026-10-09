@@ -57,9 +57,11 @@ export function AuthPage({ mode = "login", go }) {
     try {
       setLoading(true);
       setError("");
+      const targetOrigin = window.location.origin;
       await signIn.social({
         provider: "google",
-        callbackURL: window.location.origin,
+        callbackURL: `${targetOrigin}/`,
+        errorCallbackURL: `${targetOrigin}/`,
       });
     } catch (err) {
       console.error("Google sign-in error:", err);

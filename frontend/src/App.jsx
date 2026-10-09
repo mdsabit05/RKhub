@@ -19,6 +19,20 @@ export function App() {
 
   // Sync session on mount (essential for Google OAuth return)
   useEffect(() => {
+    // 1. Check if token was provided in URL query or hash params from OAuth redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const returnedToken = urlParams.get("token") || hashParams.get("token");
+
+    if (returnedToken) {
+      localStorage.setItem("rkhub_auth_token", returnedToken);
+      urlParams.delete("token");
+      const cleanSearch = urlParams.toString() ? `?${urlParams.toString()}` : "";
+      const cleanUrl = `${window.location.pathname}${cleanSearch}`;
+      window.history.replaceState({ rkhubPage: "home" }, "", cleanUrl);
+    }
+
+    // 2. Fetch active session using Bearer auth token
     getSession()
       .then((res) => {
         if (res?.data?.token) {
