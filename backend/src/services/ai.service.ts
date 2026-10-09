@@ -571,7 +571,7 @@ Format as:
     }
 
     return {
-      message: `No ${resolvedType === "notes" ? "notes" : resolvedType === "pyq" ? "PYQ" : resolvedType} has been uploaded yet for ${subject.code} — ${subject.name}${unitNo ? ` (Unit ${unitNo})` : ""}. Check the Admin section to upload it.`,
+      message: `No ${resolvedType === "notes" ? "notes" : resolvedType === "pyq" ? "PYQ" : resolvedType} has been uploaded yet for ${subject.code} — ${subject.name}${unitNo ? ` (Unit ${unitNo})` : ""}.`,
       intent,
       found: false,
     };
