@@ -154,6 +154,13 @@ button {
   font-size: 18px;
 }
 
+.desktop-auth-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .menu-button {
   display: none;
   width: 42px;
@@ -831,6 +838,10 @@ button {
     grid-template-columns: 1fr;
     gap: 28px;
   }
+
+  .auth-showcase {
+    display: none;
+  }
 }
 
 /* ==========================================================================
@@ -866,6 +877,10 @@ button {
     width: 100%;
     text-align: left;
     padding: 11px 14px;
+  }
+
+  .desktop-auth-area {
+    display: none;
   }
 
   .menu-button {

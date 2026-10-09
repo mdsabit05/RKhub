@@ -66,6 +66,9 @@ export function App() {
 
   useEffect(() => {
     const onPopState = (event) => {
+      // ResourcePage has its own popstate handler for in-resource navigation
+      if (event.state?.rkhubResource) return;
+
       setPage(event.state?.rkhubPage || "home");
       setMenu(false);
       setNotice("");
