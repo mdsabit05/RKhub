@@ -360,6 +360,24 @@ resources.post("/upload", async (c) => {
   }, 201);
 });
 
+resources.get("/:id/file", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id)) {
+    return c.json({ error: "Invalid resource id" }, 400);
+  }
+
+  const rows = await query(
+    `SELECT file_url AS "fileUrl" FROM resources WHERE id = $1`,
+    [id]
+  );
+
+  if (!rows.length || !rows[0].fileUrl) {
+    return c.json({ error: "Resource not found" }, 404);
+  }
+
+  return storageService.proxyFile(rows[0].fileUrl);
+});
+
 resources.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (!Number.isInteger(id)) {

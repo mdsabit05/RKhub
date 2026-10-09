@@ -373,7 +373,7 @@ export function ResourcePdfList({
                 <tbody>
                   {filteredResources.map((res, index) => {
                     const rawUrl = res.fileUrl || res.externalUrl;
-                    const url = rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl;
+                    const url = rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : `${API_URL}/api/resources/${res.id}/file`;
                     const isOwner = Boolean(user && res.uploadedBy && res.uploadedBy === user.id);
                     const uploaderDisplay =
                       res.uploaderName ||

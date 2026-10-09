@@ -17,6 +17,7 @@ export interface UploadResult {
 export interface IStorageService {
   upload(options: UploadOptions): Promise<UploadResult>;
   delete(fileUrl: string): Promise<void>;
+  proxyFile(fileUrl: string): Promise<Response>;
 }
 
 class LocalStorageService implements IStorageService {
@@ -75,6 +76,23 @@ class LocalStorageService implements IStorageService {
       if (err.code !== "ENOENT") {
         throw err;
       }
+    }
+  }
+
+  async proxyFile(fileUrl: string): Promise<Response> {
+    const prefix = "/pdfs/";
+    if (!fileUrl.startsWith(prefix)) {
+      return new Response("Not found", { status: 404 });
+    }
+    const relativePath = fileUrl.slice(prefix.length);
+    const absolutePath = path.join(this.baseDir, relativePath);
+    try {
+      const buffer = await fs.readFile(absolutePath);
+      return new Response(buffer, {
+        headers: { "Content-Type": "application/pdf" },
+      });
+    } catch {
+      return new Response("Not found", { status: 404 });
     }
   }
 }
@@ -254,6 +272,28 @@ class BackblazeB2StorageService implements IStorageService {
       await fallback.delete(fileUrl).catch(() => {});
     }
   }
+
+  async proxyFile(fileUrl: string): Promise<Response> {
+    if (fileUrl.startsWith("/pdfs/")) {
+      const fallback = new LocalStorageService();
+      return fallback.proxyFile(fileUrl);
+    }
+    try {
+      const auth = await this.getAuth();
+      const res = await fetch(fileUrl, {
+        headers: { Authorization: auth.authToken },
+      });
+      return new Response(res.body, {
+        status: res.status,
+        headers: {
+          "Content-Type": res.headers.get("Content-Type") || "application/pdf",
+          "Content-Disposition": "inline",
+        },
+      });
+    } catch (err: any) {
+      return new Response("Failed to fetch file", { status: 502 });
+    }
+  }
 }
 
 /**
@@ -344,6 +384,17 @@ class S3CompatibleStorageService implements IStorageService {
     if (!response.ok && response.status !== 404) {
       throw new Error(`Failed to delete from cloud storage: ${response.status} ${response.statusText}`);
     }
+  }
+
+  async proxyFile(fileUrl: string): Promise<Response> {
+    const res = await fetch(fileUrl);
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        "Content-Type": res.headers.get("Content-Type") || "application/pdf",
+        "Content-Disposition": "inline",
+      },
+    });
   }
 }
 
