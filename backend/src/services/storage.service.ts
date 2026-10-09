@@ -189,9 +189,8 @@ class BackblazeB2StorageService implements IStorageService {
         storageProvider: "b2",
       };
     } catch (err: any) {
-      console.warn(`[Storage] Backblaze B2 upload error (${err.message}). Falling back to local storage.`);
-      const fallback = new LocalStorageService();
-      return fallback.upload(options);
+      console.error(`[Storage] Backblaze B2 upload failed: ${err.message}`);
+      throw new Error(`File upload failed: ${err.message}`);
     }
   }
 
