@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ArrowRight,
+  ExternalLink,
   FileText,
   GraduationCap,
   Library,
@@ -20,6 +21,23 @@ export function Home({ prompt, setPrompt, notice, submit, go, aiResult }) {
 
   return (
     <main>
+      <a
+        className="academiq-strip"
+        href="https://academiq-6ch.pages.dev/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="academiq-strip-left">
+          <GraduationCap size={16} aria-hidden="true" />
+          <span className="academiq-strip-title">Study smarter with <strong>AcademIQ</strong></span>
+          <span className="academiq-strip-divider" aria-hidden="true" />
+          <span className="academiq-strip-sub">Upload your study materials, learn with AI, and test your knowledge.</span>
+        </span>
+        <span className="academiq-strip-link">
+          Visit AcademIQ <ExternalLink size={12} aria-hidden="true" />
+        </span>
+      </a>
+
       <section className="hero">
         <div className="hero-copy">
           <div className="assistant-pill">

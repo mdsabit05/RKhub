@@ -173,6 +173,80 @@ button {
   flex-shrink: 0;
 }
 
+/* ACADEMIQ ANNOUNCEMENT STRIP */
+.academiq-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 14px;
+  height: 42px;
+  background: var(--green-light);
+  border: 1px solid #c6dfd0;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  text-decoration: none;
+  color: var(--green-dark);
+  font-size: 13px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  outline-offset: 2px;
+}
+
+.academiq-strip:hover {
+  background: #ddeee4;
+  border-color: #a8cdb8;
+}
+
+.academiq-strip:focus-visible {
+  outline: 2px solid var(--green);
+}
+
+.academiq-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.academiq-strip-title {
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--green-dark);
+  flex-shrink: 0;
+}
+
+.academiq-strip-title strong {
+  font-weight: 700;
+}
+
+.academiq-strip-divider {
+  width: 1px;
+  height: 14px;
+  background: #a8cdb8;
+  flex-shrink: 0;
+}
+
+.academiq-strip-sub {
+  color: #3d7a5a;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.academiq-strip-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--green);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* HERO SECTION */
 .hero {
   padding: 36px 28px 30px;
@@ -946,6 +1020,24 @@ button {
     border-top: 1px solid var(--line);
     margin-top: 6px;
     padding-top: 6px;
+  }
+
+  /* ACADEMIQ STRIP — mobile */
+  .academiq-strip {
+    height: auto;
+    min-height: 38px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .academiq-strip-sub,
+  .academiq-strip-divider {
+    display: none;
+  }
+
+  .academiq-strip-left {
+    gap: 6px;
   }
 
   /* HERO */
