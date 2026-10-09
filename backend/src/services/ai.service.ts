@@ -232,18 +232,36 @@ async function findSubjectByName(
       .replace(/[^a-z0-9\s]/g, " ")
       .trim();
 
-    // Split into individual words (4+ chars) and match ANY of them
-    // This handles typos: "architechture" won't match but "computer" will still find "Computer Architecture"
     const words = cleanSearch.split(/\s+/).filter((w) => w.length >= 4);
-    if (words.length > 0) {
-      const orClauses = words.map((word) => {
-        params.push(`%${word}%`);
-        return `(LOWER(s.name) LIKE $${params.length} OR LOWER(s.code) LIKE $${params.length})`;
-      });
-      conditions.push(`(${orClauses.join(" OR ")})`);
-    } else {
-      return null;
-    }
+    if (words.length === 0) return null;
+
+    // Pass 1: AND — all words must appear in the subject name (precise match)
+    const andParams: unknown[] = [...params];
+    const andConditions: string[] = [...conditions];
+    const andClauses = words.map((word) => {
+      andParams.push(`%${word}%`);
+      return `LOWER(s.name) LIKE $${andParams.length}`;
+    });
+    andConditions.push(`(${andClauses.join(" AND ")})`);
+
+    const andSql = `
+      SELECT s.id, s.code, s.name, s.year_no AS "yearNo", s.semester_no AS "semesterNo",
+             c.code AS "courseCode", c.name AS "courseName"
+      FROM subjects s
+      JOIN courses c ON c.id = s.course_id
+      WHERE ${andConditions.join(" AND ")}
+      ORDER BY s.display_order, s.code
+      LIMIT 1
+    `;
+    const andRows = await query(andSql, andParams);
+    if (andRows[0]) return andRows[0];
+
+    // Pass 2: OR fallback — any word matches (handles typos like "architechture" → "computer" still matches)
+    const orClauses = words.map((word) => {
+      params.push(`%${word}%`);
+      return `LOWER(s.name) LIKE $${params.length}`;
+    });
+    conditions.push(`(${orClauses.join(" OR ")})`);
   }
 
   if (course) {
