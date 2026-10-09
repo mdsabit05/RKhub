@@ -257,6 +257,9 @@ resources.post("/upload", async (c) => {
 
   // Handle complete_syllabus separately — no subject/unit/year/semester required
   if (type === "complete_syllabus") {
+    if (!file || !(file instanceof File)) {
+      return c.json({ error: "PDF file is required" }, 400);
+    }
     const folder = "complete-syllabus";
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const uploadResult = await storageService.upload({
