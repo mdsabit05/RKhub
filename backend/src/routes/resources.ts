@@ -315,6 +315,28 @@ resources.post("/upload", async (c) => {
     subject = rows[0] ?? null;
   }
 
+  // Semester-level syllabus: no subject required
+  if (!subject && type === "syllabus") {
+    const courseFolder = String(course).toLowerCase();
+    const semesterFolder = `sem${String(semester)}`;
+    const folder = `syllabus/${courseFolder}/${semesterFolder}`;
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const uploadResult = await storageService.upload({
+      fileName: "syllabus.pdf",
+      buffer: fileBuffer,
+      folder,
+      mimeType: "application/pdf",
+    });
+    const uploaderId = user ? user.id : null;
+    const insertResult = await query(
+      `INSERT INTO resources (resource_type, subject_id, unit_id, year_no, semester_no, title, description, file_url, uploaded_by, file_size)
+       VALUES ($1, NULL, NULL, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, title, file_url AS "fileUrl", uploaded_by AS "uploadedBy", file_size AS "fileSize", created_at AS "createdAt"`,
+      [type, year, semester, title || `${course} Semester ${semester} Syllabus`, "Semester syllabus", uploadResult.fileUrl, uploaderId, fileBuffer.length]
+    );
+    return c.json({ message: "Resource uploaded successfully.", resource: insertResult[0] }, 201);
+  }
+
   if (!subject) {
     return c.json({ error: "Subject not found for the selected year/course/semester" }, 400);
   }

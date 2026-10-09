@@ -526,7 +526,6 @@ export function ResourcePage({ type, go }) {
           year={year}
           course={course}
           semester={semester}
-          subjects={subjects}
           onBack={() => window.history.back()}
         />
       )}

@@ -12,7 +12,7 @@ import {
 import { useSession } from "../lib/auth-client";
 import { API_URL, api } from "../api";
 
-export function SyllabusList({ year, course, semester, subjects = [], onBack }) {
+export function SyllabusList({ year, course, semester, onBack }) {
   const { data: session } = useSession();
 
   const [resources, setResources] = useState([]);
@@ -21,7 +21,6 @@ export function SyllabusList({ year, course, semester, subjects = [], onBack }) 
   const [statusMessage, setStatusMessage] = useState("");
 
   const [showUpload, setShowUpload] = useState(false);
-  const [uploadSubjectId, setUploadSubjectId] = useState("");
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -42,12 +41,8 @@ export function SyllabusList({ year, course, semester, subjects = [], onBack }) 
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!uploadSubjectId) { setUploadError("Please select a subject."); return; }
     if (!uploadFile) { setUploadError("Please select a PDF file."); return; }
     if (!uploadFile.name.toLowerCase().endsWith(".pdf")) { setUploadError("Only PDF files are allowed."); return; }
-
-    const subject = subjects.find((s) => String(s.id) === String(uploadSubjectId));
-    if (!subject) { setUploadError("Invalid subject selected."); return; }
 
     try {
       setUploading(true);
@@ -57,14 +52,12 @@ export function SyllabusList({ year, course, semester, subjects = [], onBack }) 
       formData.append("year", String(year.year));
       formData.append("course", course.code);
       formData.append("semester", String(semester.semester));
-      formData.append("subjectId", String(subject.id));
-      formData.append("title", `${subject.code} - Syllabus`);
+      formData.append("title", `${course.code} Semester ${semester.semester} Syllabus`);
       formData.append("file", uploadFile);
       const token = session?.session?.token || localStorage.getItem("rkhub_auth_token") || null;
       await api.uploadResource(formData, token);
       setStatusMessage("Syllabus uploaded successfully!");
       setUploadFile(null);
-      setUploadSubjectId("");
       setShowUpload(false);
       fetchResources();
     } catch (err) {
@@ -128,19 +121,6 @@ export function SyllabusList({ year, course, semester, subjects = [], onBack }) 
           </div>
 
           <div style={{ display: "grid", gap: 14 }}>
-            <label style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Select Subject</span>
-              <select
-                value={uploadSubjectId}
-                onChange={(e) => setUploadSubjectId(e.target.value)}
-                style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 15, background: "#fff" }}
-              >
-                <option value="">-- Choose a subject --</option>
-                {subjects.map((s) => (
-                  <option key={s.id} value={s.id}>{s.code} — {s.name}</option>
-                ))}
-              </select>
-            </label>
 
             <label style={{ display: "grid", gap: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Select PDF Document</span>
