@@ -88,12 +88,12 @@ CREATE TABLE IF NOT EXISTS "verification" (
 CREATE TABLE IF NOT EXISTS resources (
   id SERIAL PRIMARY KEY,
   resource_type TEXT NOT NULL CHECK (
-    resource_type IN ('notes', 'pyq', 'syllabus', 'reference')
+    resource_type IN ('notes', 'pyq', 'syllabus', 'reference', 'complete_syllabus')
   ),
   subject_id INTEGER REFERENCES subjects(id) ON DELETE CASCADE,
   unit_id INTEGER REFERENCES units(id) ON DELETE CASCADE,
-  year_no INTEGER NOT NULL REFERENCES academic_years(year_no),
-  semester_no INTEGER NOT NULL REFERENCES semesters(semester_no),
+  year_no INTEGER REFERENCES academic_years(year_no),
+  semester_no INTEGER REFERENCES semesters(semester_no),
   title TEXT NOT NULL,
   description TEXT,
   file_url TEXT,

@@ -107,6 +107,26 @@ export async function ensureDatabaseSchema(): Promise<void> {
       EXCEPTION WHEN OTHERS THEN NULL;
       END $$;
     `);
+
+    // Allow year_no and semester_no to be NULL for complete_syllabus resources
+    // and extend the resource_type CHECK to include 'complete_syllabus'
+    await pool.query(`
+      DO $$
+      BEGIN
+        ALTER TABLE resources ALTER COLUMN year_no DROP NOT NULL;
+        ALTER TABLE resources ALTER COLUMN semester_no DROP NOT NULL;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+    `);
+    await pool.query(`
+      DO $$
+      BEGIN
+        ALTER TABLE resources DROP CONSTRAINT IF EXISTS resources_resource_type_check;
+        ALTER TABLE resources ADD CONSTRAINT resources_resource_type_check
+          CHECK (resource_type IN ('notes', 'pyq', 'syllabus', 'reference', 'complete_syllabus'));
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+    `);
     console.log("[Database] Schema check and migrations completed successfully.");
   } catch (err) {
     console.error("[Database] Migration check failed:", err);

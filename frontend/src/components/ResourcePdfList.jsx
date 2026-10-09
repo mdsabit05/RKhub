@@ -73,6 +73,7 @@ export function ResourcePdfList({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+
   const filteredResources = useMemo(() => {
     if (!searchTerm.trim()) return resources;
     const term = searchTerm.toLowerCase();
@@ -84,7 +85,8 @@ export function ResourcePdfList({
     );
   }, [resources, searchTerm]);
 
-  const defaultTitle = `${subject.code} - ${unit ? unit.name : "Syllabus"} ${
+  const unitLabel = unit ? unit.name : (resourceType === "pyq" ? "All Units" : "Syllabus");
+  const defaultTitle = `${subject.code} - ${unitLabel} ${
     resourceType === "notes" ? "Notes" : resourceType === "pyq" ? "PYQ" : "Reference"
   }`;
 
@@ -331,7 +333,7 @@ export function ResourcePdfList({
               <FileText size={40} />
             </div>
             <h4>No PDF materials available yet.</h4>
-            <p>Be the first to upload material for this unit.</p>
+            <p>Be the first to upload material for this {unit ? "unit" : "subject"}.</p>
             <button
               className="primary-action"
               onClick={() => setShowUpload(true)}

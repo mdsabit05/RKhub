@@ -114,7 +114,7 @@ resources.get("/list", async (c) => {
   const year = c.req.query("year");
   const semester = c.req.query("semester");
 
-  if (!["notes", "pyq", "syllabus", "reference"].includes(type ?? "")) {
+  if (!["notes", "pyq", "syllabus", "reference", "complete_syllabus"].includes(type ?? "")) {
     return c.json({ error: "Invalid resource type" }, 400);
   }
 
@@ -247,12 +247,32 @@ resources.post("/upload", async (c) => {
   const title = String(body.title ?? "").trim();
   const file = body.file as File | undefined;
 
-  if (!type || !["notes", "pyq", "syllabus", "reference"].includes(type)) {
+  if (!type || !["notes", "pyq", "syllabus", "reference", "complete_syllabus"].includes(type)) {
     return c.json({ error: "Invalid resource type" }, 400);
   }
 
-  if (!course || !year || !semester) {
+  if (type !== "complete_syllabus" && (!course || !year || !semester)) {
     return c.json({ error: "Year, course and semester are required" }, 400);
+  }
+
+  // Handle complete_syllabus separately — no subject/unit/year/semester required
+  if (type === "complete_syllabus") {
+    const folder = "complete-syllabus";
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const uploadResult = await storageService.upload({
+      fileName: "complete-syllabus.pdf",
+      buffer: fileBuffer,
+      folder,
+      mimeType: "application/pdf",
+    });
+    const uploaderId = user ? user.id : null;
+    const insertResult = await query(
+      `INSERT INTO resources (resource_type, subject_id, unit_id, year_no, semester_no, title, description, file_url, uploaded_by, file_size)
+       VALUES ($1, NULL, NULL, NULL, NULL, $2, $3, $4, $5, $6)
+       RETURNING id, title, file_url AS "fileUrl", uploaded_by AS "uploadedBy", file_size AS "fileSize", created_at AS "createdAt"`,
+      [type, title || "Complete 4-Year Syllabus", "Complete course syllabus", uploadResult.fileUrl, uploaderId, fileBuffer.length]
+    );
+    return c.json({ message: "Resource uploaded successfully.", resource: insertResult[0] }, 201);
   }
 
   if (!file || !(file instanceof File)) {
@@ -296,7 +316,7 @@ resources.post("/upload", async (c) => {
     return c.json({ error: "Subject not found for the selected year/course/semester" }, 400);
   }
 
-  if (["notes", "pyq", "reference"].includes(type) && !unitId) {
+  if (["notes", "reference"].includes(type) && !unitId) {
     return c.json({ error: "Unit is required for this resource type" }, 400);
   }
 
@@ -304,7 +324,7 @@ resources.post("/upload", async (c) => {
     ? (await query(`SELECT id, unit_no AS "unitNo", name FROM units WHERE id = $1 LIMIT 1`, [unitId]))[0] ?? null
     : null;
 
-  if (["notes", "pyq", "reference"].includes(type) && !unit) {
+  if (["notes", "reference"].includes(type) && !unit) {
     return c.json({ error: "Selected unit not found" }, 400);
   }
 

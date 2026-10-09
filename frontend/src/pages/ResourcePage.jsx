@@ -1,13 +1,127 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ChevronRight, FileText } from "lucide-react";
-import { api } from "../api";
+import { ArrowLeft, ChevronRight, Download, ExternalLink, FileText, Upload, X } from "lucide-react";
+import { useSession } from "../lib/auth-client";
+import { API_URL, api } from "../api";
 import { Choice } from "../components/Choice";
 import { Document } from "../components/Document";
 import { Materials } from "../components/Materials";
 import { ResourcePdfList } from "../components/ResourcePdfList";
 import { Selection } from "../components/Selection";
 import { SubjectList } from "../components/SubjectList";
+import { SyllabusList } from "../components/SyllabusList";
 import { resourceMeta } from "../constants/resources";
+
+function CompleteSyllabusCard() {
+  const { data: session } = useSession();
+  const [resource, setResource] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const fetchResource = () => {
+    setLoading(true);
+    api.list("complete_syllabus", {}).then((data) => setResource(data[0] ?? null)).catch(() => {}).finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchResource(); }, []);
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!uploadFile) { setUploadError("Please select a PDF file."); return; }
+    if (!uploadFile.name.toLowerCase().endsWith(".pdf")) { setUploadError("Only PDF files are allowed."); return; }
+    try {
+      setUploading(true);
+      setUploadError("");
+      const formData = new FormData();
+      formData.append("resourceType", "complete_syllabus");
+      formData.append("title", "Complete 4-Year Syllabus");
+      formData.append("file", uploadFile);
+      const token = session?.session?.token || localStorage.getItem("rkhub_auth_token") || null;
+      await api.uploadResource(formData, token);
+      setSuccess("Complete syllabus uploaded!");
+      setUploadFile(null);
+      setShowUpload(false);
+      fetchResource();
+    } catch (err) {
+      setUploadError(err.message || "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const rawUrl = resource?.fileUrl || resource?.externalUrl;
+  const url = rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : resource ? `${API_URL}/api/resources/${resource.id}/file` : null;
+
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)",
+      border: "1.5px solid #86efac",
+      borderRadius: 16,
+      padding: "20px 24px",
+      marginBottom: 28,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: "#dcfce7", color: "#16a34a", display: "grid", placeItems: "center", flexShrink: 0 }}>
+          <FileText size={26} />
+        </div>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontWeight: 800, fontSize: 16, color: "#14532d" }}>Complete 4-Year Syllabus</div>
+          <div style={{ fontSize: 13, color: "#166534", marginTop: 2 }}>
+            {loading ? "Loading..." : resource ? resource.title : "No complete syllabus uploaded yet"}
+          </div>
+          {success && <div style={{ fontSize: 12, color: "#16a34a", fontWeight: 600, marginTop: 4 }}>{success}</div>}
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {url && (
+            <>
+              <a className="action-btn action-view" href={url} target="_blank" rel="noreferrer" title="View complete syllabus">
+                <ExternalLink size={14} /><span>View</span>
+              </a>
+              <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download title="Download complete syllabus">
+                <Download size={14} /><span>Download</span>
+              </a>
+            </>
+          )}
+          <button
+            className="action-btn"
+            type="button"
+            onClick={() => { setShowUpload((p) => !p); setUploadError(""); }}
+            style={{ cursor: "pointer", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d" }}
+          >
+            <Upload size={14} />
+            <span>{showUpload ? "Cancel" : resource ? "Replace PDF" : "Upload PDF"}</span>
+          </button>
+        </div>
+      </div>
+
+      {showUpload && (
+        <form onSubmit={handleUpload} style={{ marginTop: 16, display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 5 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#166534" }}>Select Complete Syllabus PDF</span>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #86efac", fontSize: 14, background: "#f0fdf4" }}
+            />
+          </label>
+          {uploadError && <div className="api-error">{uploadError}</div>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="primary-action" type="submit" disabled={uploading} style={{ cursor: "pointer" }}>
+              <Upload size={15} />{uploading ? "Uploading..." : "Upload & Save"}
+            </button>
+            <button className="secondary-action" type="button" onClick={() => setShowUpload(false)} style={{ cursor: "pointer" }}>
+              <X size={15} />Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
 
 export function ResourcePage({ type, go }) {
   const meta = resourceMeta[type] || resourceMeta.notes;
@@ -136,7 +250,7 @@ export function ResourcePage({ type, go }) {
   }, [year, course, semester]);
 
   useEffect(() => {
-    if (!subject || type === "syllabus") return;
+    if (!subject || type === "syllabus" || type === "pyq") return;
 
     let active = true;
     setLoading(true);
@@ -154,14 +268,18 @@ export function ResourcePage({ type, go }) {
   }, [subject, type]);
 
   const fetchResources = () => {
-    if (!subject || !year || !course || !semester || !unit) return;
+    if (!subject || !year || !course || !semester) return;
     if (type === "syllabus") return;
+    if (type !== "pyq" && !unit) return;
 
     setLoading(true);
     setError("");
 
+    const listParams = { subjectId: subject.id };
+    if (unit) listParams.unitId = unit.id;
+
     api
-      .list(type, { subjectId: subject.id, unitId: unit.id })
+      .list(type, listParams)
       .then((data) => setResources(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -193,7 +311,7 @@ export function ResourcePage({ type, go }) {
 
   const chooseSemester = (value) =>
     pushStep({
-      step: "subject",
+      step: type === "syllabus" ? "syllabus-list" : "subject",
       year,
       course,
       semester: value,
@@ -203,7 +321,7 @@ export function ResourcePage({ type, go }) {
 
   const chooseSubject = (value) =>
     pushStep({
-      step: type === "syllabus" ? "document" : "unit",
+      step: type === "syllabus" ? "document" : type === "pyq" ? "pdf-list" : "unit",
       year,
       course,
       semester,
@@ -246,7 +364,7 @@ export function ResourcePage({ type, go }) {
       next.semester = null;
       next.subject = null;
       next.unit = null;
-    } else if (targetStep === "subject") {
+    } else if (targetStep === "subject" || targetStep === "syllabus-list") {
       next.subject = null;
       next.unit = null;
     }
@@ -258,7 +376,7 @@ export function ResourcePage({ type, go }) {
     const result = [{ label: "Start", step: "year" }];
     if (year) result.push({ label: year.name, step: "course" });
     if (course) result.push({ label: course.code, step: "semester" });
-    if (semester) result.push({ label: semester.name, step: "subject" });
+    if (semester) result.push({ label: semester.name, step: type === "syllabus" ? "syllabus-list" : "subject" });
     if (subject) result.push({ label: subject.code, step: "unit" });
     if (unit) result.push({ label: unit.name, step: "unit" });
     return result;
@@ -297,18 +415,21 @@ export function ResourcePage({ type, go }) {
       {loading && <div className="loading-line">Loading...</div>}
 
       {step === "year" && (
-        <Selection
-          title="Choose your year"
-          sub="Select your academic year to continue."
-        >
-          <Choice
-            items={years}
-            labelKey="name"
-            select={chooseYear}
-            empty="No academic years available."
-            loading={loading}
-          />
-        </Selection>
+        <>
+          {type === "syllabus" && <CompleteSyllabusCard />}
+          <Selection
+            title="Choose your year"
+            sub="Select your academic year to continue."
+          >
+            <Choice
+              items={years}
+              labelKey="name"
+              select={chooseYear}
+              empty="No academic years available."
+              loading={loading}
+            />
+          </Selection>
+        </>
       )}
 
       {step === "course" && (
@@ -372,7 +493,7 @@ export function ResourcePage({ type, go }) {
         </Selection>
       )}
 
-      {(step === "pdf-list" || step === "materials") && subject && unit && (
+      {(step === "pdf-list" || step === "materials") && subject && (unit || type === "pyq") && (
         <ResourcePdfList
           resourceType={type}
           resources={resources}
@@ -396,6 +517,16 @@ export function ResourcePage({ type, go }) {
           semester={semester}
           subject={subject}
           unit={unit}
+          onBack={() => window.history.back()}
+        />
+      )}
+
+      {step === "syllabus-list" && year && course && semester && (
+        <SyllabusList
+          year={year}
+          course={course}
+          semester={semester}
+          subjects={subjects}
           onBack={() => window.history.back()}
         />
       )}
