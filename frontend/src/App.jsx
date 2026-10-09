@@ -27,6 +27,14 @@ export function App() {
     if (returnedToken) {
       localStorage.setItem("rkhub_auth_token", returnedToken);
       urlParams.delete("token");
+    }
+
+    const errorParam = urlParams.get("error");
+    if (errorParam) {
+      urlParams.delete("error");
+    }
+
+    if (returnedToken || errorParam) {
       const cleanSearch = urlParams.toString() ? `?${urlParams.toString()}` : "";
       const cleanUrl = `${window.location.pathname}${cleanSearch}`;
       window.history.replaceState({ rkhubPage: "home" }, "", cleanUrl);

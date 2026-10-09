@@ -28,6 +28,12 @@ export const auth = betterAuth({
   account: {
     storeStateStrategy: "database",
     skipStateCookieCheck: true,
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
+      requireLocalEmailVerified: false,
+      updateUserInfoOnLink: true,
+    },
   },
   onAPIError: {
     errorURL: "https://rkhub.pages.dev",
