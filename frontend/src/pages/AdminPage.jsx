@@ -13,6 +13,7 @@ import {
   Layers,
   Lock,
   LogOut,
+  Plus,
   RefreshCw,
   Search,
   Send,
@@ -71,6 +72,21 @@ export function AdminPage({ go }) {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteTarget, setConfirmDeleteTarget] = useState(null);
   const [alertNotice, setAlertNotice] = useState(null);
+
+  // Manage Units tab state
+  const [unitMgmtSubjectId, setUnitMgmtSubjectId] = useState("");
+  const [unitMgmtSubjects, setUnitMgmtSubjects] = useState([]);
+  const [unitMgmtYear, setUnitMgmtYear] = useState("");
+  const [unitMgmtCourse, setUnitMgmtCourse] = useState("BCA");
+  const [unitMgmtSemester, setUnitMgmtSemester] = useState("");
+  const [unitMgmtSemesters, setUnitMgmtSemesters] = useState([]);
+  const [unitMgmtList, setUnitMgmtList] = useState([]);
+  const [unitMgmtLoading, setUnitMgmtLoading] = useState(false);
+  const [unitMgmtError, setUnitMgmtError] = useState("");
+  const [newUnitNo, setNewUnitNo] = useState("");
+  const [newUnitName, setNewUnitName] = useState("");
+  const [addingUnit, setAddingUnit] = useState(false);
+  const [deletingUnitId, setDeletingUnitId] = useState(null);
 
   // Upload Form state
   const [years, setYears] = useState([]);
@@ -201,6 +217,69 @@ export function AdminPage({ go }) {
       .then((data) => setUnits(data))
       .catch((err) => setUploadError(err.message));
   }, [form.subjectId]);
+
+  // Unit management cascading selectors
+  useEffect(() => {
+    if (!unitMgmtYear) { setUnitMgmtSemesters([]); return; }
+    api.getSemesters(unitMgmtYear).then(setUnitMgmtSemesters).catch(() => {});
+  }, [unitMgmtYear]);
+
+  useEffect(() => {
+    if (!unitMgmtYear || !unitMgmtCourse || !unitMgmtSemester) { setUnitMgmtSubjects([]); return; }
+    api.getSubjects(Number(unitMgmtYear), unitMgmtCourse, Number(unitMgmtSemester))
+      .then(setUnitMgmtSubjects).catch(() => {});
+  }, [unitMgmtYear, unitMgmtCourse, unitMgmtSemester]);
+
+  const fetchUnitMgmtList = async (subjectId = unitMgmtSubjectId) => {
+    if (!subjectId) { setUnitMgmtList([]); return; }
+    try {
+      setUnitMgmtLoading(true);
+      setUnitMgmtError("");
+      const res = await api.getAdminUnits(subjectId, adminKey);
+      setUnitMgmtList(res.units || []);
+    } catch (err) {
+      setUnitMgmtError(err.message || "Failed to load units.");
+    } finally {
+      setUnitMgmtLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUnitMgmtList(unitMgmtSubjectId); }, [unitMgmtSubjectId]);
+
+  const handleAddUnit = async (e) => {
+    e.preventDefault();
+    if (!unitMgmtSubjectId || !newUnitNo || !newUnitName.trim()) {
+      setUnitMgmtError("Select a subject and fill unit number + name.");
+      return;
+    }
+    try {
+      setAddingUnit(true);
+      setUnitMgmtError("");
+      await api.addAdminUnit(Number(unitMgmtSubjectId), Number(newUnitNo), newUnitName.trim(), adminKey);
+      setNewUnitNo("");
+      setNewUnitName("");
+      await fetchUnitMgmtList();
+      setAlertNotice({ type: "success", message: `Unit ${newUnitNo} added successfully.` });
+    } catch (err) {
+      setUnitMgmtError(err.message || "Failed to add unit.");
+    } finally {
+      setAddingUnit(false);
+    }
+  };
+
+  const handleDeleteUnit = async (unit) => {
+    try {
+      setDeletingUnitId(unit.id);
+      setUnitMgmtError("");
+      await api.deleteAdminUnit(unit.id, adminKey);
+      setUnitMgmtList((prev) => prev.filter((u) => u.id !== unit.id));
+      setAlertNotice({ type: "success", message: `Unit ${unit.unitNo} "${unit.name}" deleted.` });
+    } catch (err) {
+      setUnitMgmtError(err.message || "Failed to delete unit.");
+    } finally {
+      setDeletingUnitId(null);
+    }
+  };
 
   const requiresUnit = ["notes", "pyq", "reference"].includes(form.resourceType);
 
@@ -723,6 +802,28 @@ export function AdminPage({ go }) {
                   <Upload size={15} />
                   <span>Upload Resource</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("units")}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    fontWeight: 650,
+                    cursor: "pointer",
+                    border: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    background: activeTab === "units" ? "#0f766e" : "transparent",
+                    color: activeTab === "units" ? "#ffffff" : "#94a3b8",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <Layers size={15} />
+                  <span>Manage Units</span>
+                </button>
               </div>
             </div>
 
@@ -1179,6 +1280,194 @@ export function AdminPage({ go }) {
                     );
                   })}
                 </div>
+              )}
+            </section>
+          )}
+
+          {/* TAB 3: MANAGE UNITS */}
+          {activeTab === "units" && (
+            <section
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                borderRadius: 18,
+                padding: 28,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+              }}
+            >
+              <div style={{ marginBottom: 22 }}>
+                <h3 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>
+                  Manage Units
+                </h3>
+                <p style={{ margin: 0, color: "#64748b", fontSize: 14 }}>
+                  Add or remove units for any subject.
+                </p>
+              </div>
+
+              {/* Cascading selectors */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 16 }}>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: "#334155" }}>Year</span>
+                  <select
+                    value={unitMgmtYear}
+                    onChange={(e) => { setUnitMgmtYear(e.target.value); setUnitMgmtSemester(""); setUnitMgmtSubjectId(""); }}
+                    style={{ height: 40, padding: "0 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13, background: "#f8fafc" }}
+                  >
+                    <option value="">Select year</option>
+                    {years.map((y) => <option key={y.year} value={y.year}>{y.name}</option>)}
+                  </select>
+                </label>
+
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: "#334155" }}>Course</span>
+                  <select
+                    value={unitMgmtCourse}
+                    onChange={(e) => { setUnitMgmtCourse(e.target.value); setUnitMgmtSubjectId(""); }}
+                    style={{ height: 40, padding: "0 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13, background: "#f8fafc" }}
+                  >
+                    <option value="BCA">BCA</option>
+                    <option value="BBA">BBA</option>
+                  </select>
+                </label>
+
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: "#334155" }}>Semester</span>
+                  <select
+                    value={unitMgmtSemester}
+                    onChange={(e) => { setUnitMgmtSemester(e.target.value); setUnitMgmtSubjectId(""); }}
+                    style={{ height: 40, padding: "0 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13, background: "#f8fafc" }}
+                  >
+                    <option value="">Select semester</option>
+                    {unitMgmtSemesters.map((s) => <option key={s.semester} value={s.semester}>{s.name}</option>)}
+                  </select>
+                </label>
+
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: "#334155" }}>Subject</span>
+                  <select
+                    value={unitMgmtSubjectId}
+                    onChange={(e) => setUnitMgmtSubjectId(e.target.value)}
+                    style={{ height: 40, padding: "0 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13, background: "#f8fafc" }}
+                  >
+                    <option value="">Select subject</option>
+                    {unitMgmtSubjects.map((s) => <option key={s.id} value={s.id}>{s.code} — {s.name}</option>)}
+                  </select>
+                </label>
+              </div>
+
+              {unitMgmtError && (
+                <div style={{ background: "#fff5f5", border: "1px solid #fecdd3", color: "#b42318", padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 16 }}>
+                  {unitMgmtError}
+                </div>
+              )}
+
+              {unitMgmtSubjectId && (
+                <>
+                  {/* Current units list */}
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", marginBottom: 10 }}>
+                      Current Units {unitMgmtLoading ? "(loading...)" : `(${unitMgmtList.length})`}
+                    </div>
+                    {unitMgmtList.length === 0 && !unitMgmtLoading ? (
+                      <div style={{ padding: "18px 16px", background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, color: "#64748b", fontSize: 13.5 }}>
+                        No units found for this subject.
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {unitMgmtList.map((unit) => (
+                          <div
+                            key={unit.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "12px 16px",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: 10,
+                              background: "#ffffff",
+                              gap: 12,
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 8, background: "#f0fdf4", color: "#0f766e", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
+                                {unit.unitNo}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: 14, color: "#0f172a" }}>Unit {unit.unitNo}</div>
+                                <div style={{ fontSize: 12.5, color: "#64748b" }}>{unit.name}</div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUnit(unit)}
+                              disabled={deletingUnitId === unit.id}
+                              style={{
+                                minHeight: 32,
+                                padding: "0 12px",
+                                fontSize: 12.5,
+                                fontWeight: 650,
+                                color: "#b42318",
+                                background: "#fff5f5",
+                                border: "1px solid #fecdd3",
+                                borderRadius: 7,
+                                cursor: deletingUnitId === unit.id ? "wait" : "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 5,
+                              }}
+                            >
+                              <Trash2 size={13} />
+                              <span>{deletingUnitId === unit.id ? "Deleting..." : "Remove"}</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add unit form */}
+                  <form onSubmit={handleAddUnit} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: 18, display: "grid", gap: 14 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", display: "flex", alignItems: "center", gap: 7 }}>
+                      <Plus size={16} />
+                      Add New Unit
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "120px 1fr auto", gap: 10, alignItems: "end" }}>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        <span style={{ fontWeight: 600, fontSize: 12.5, color: "#334155" }}>Unit No.</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={newUnitNo}
+                          onChange={(e) => setNewUnitNo(e.target.value)}
+                          placeholder="e.g. 4"
+                          required
+                          style={{ height: 40, padding: "0 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, background: "#fff" }}
+                        />
+                      </label>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        <span style={{ fontWeight: 600, fontSize: 12.5, color: "#334155" }}>Unit Name</span>
+                        <input
+                          type="text"
+                          value={newUnitName}
+                          onChange={(e) => setNewUnitName(e.target.value)}
+                          placeholder="e.g. Advanced Topics in DBMS"
+                          required
+                          style={{ height: 40, padding: "0 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, background: "#fff" }}
+                        />
+                      </label>
+                      <button
+                        className="primary-action"
+                        type="submit"
+                        disabled={addingUnit}
+                        style={{ height: 40, padding: "0 18px", display: "flex", alignItems: "center", gap: 6, cursor: addingUnit ? "wait" : "pointer", whiteSpace: "nowrap" }}
+                      >
+                        <Plus size={15} />
+                        <span>{addingUnit ? "Adding..." : "Add Unit"}</span>
+                      </button>
+                    </div>
+                  </form>
+                </>
               )}
             </section>
           )}

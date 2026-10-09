@@ -83,6 +83,27 @@ export const api = {
       headers,
     });
   },
+  getAdminUnits: (subjectId, adminKey) => {
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
+    return request(`/api/admin/units?subjectId=${subjectId}`, {
+      headers: key ? { "x-admin-key": key } : {},
+    });
+  },
+  addAdminUnit: (subjectId, unitNo, name, adminKey) => {
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
+    return request("/api/admin/units", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(key ? { "x-admin-key": key } : {}) },
+      body: JSON.stringify({ subjectId, unitNo, name }),
+    });
+  },
+  deleteAdminUnit: (id, adminKey) => {
+    const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
+    return request(`/api/admin/units/${id}`, {
+      method: "DELETE",
+      headers: key ? { "x-admin-key": key } : {},
+    });
+  },
   adminDeleteResource: (id, adminKey) => {
     const key = adminKey || sessionStorage.getItem("rkhub_admin_key");
     return request(`/api/admin/resources/${id}`, {

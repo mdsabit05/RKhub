@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS subjects (
 CREATE TABLE IF NOT EXISTS units (
   id SERIAL PRIMARY KEY,
   subject_id INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
-  unit_no INTEGER NOT NULL CHECK (unit_no BETWEEN 1 AND 4),
+  unit_no INTEGER NOT NULL CHECK (unit_no BETWEEN 1 AND 10),
   name TEXT NOT NULL,
   UNIQUE(subject_id, unit_no)
 );

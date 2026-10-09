@@ -94,6 +94,16 @@ export async function ensureDatabaseSchema(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_account_userId ON "account"("userId");
       CREATE INDEX IF NOT EXISTS idx_verification_identifier ON "verification"("identifier");
     `);
+
+    // Relax units.unit_no constraint from 1-4 to 1-10 so admins can add more units
+    await pool.query(`
+      DO $$
+      BEGIN
+        ALTER TABLE units DROP CONSTRAINT IF EXISTS units_unit_no_check;
+        ALTER TABLE units ADD CONSTRAINT units_unit_no_check CHECK (unit_no BETWEEN 1 AND 10);
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+    `);
     console.log("[Database] Schema check and migrations completed successfully.");
   } catch (err) {
     console.error("[Database] Migration check failed:", err);

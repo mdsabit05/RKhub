@@ -107,4 +107,72 @@ admin.delete("/resources/:id", async (c) => {
   });
 });
 
+// Admin: List units for a subject
+admin.get("/units", async (c) => {
+  const key = c.req.header("x-admin-key") || c.req.query("key");
+  if (!isValidAdminKey(key)) {
+    return c.json({ error: "Unauthorized: Invalid admin key" }, 401);
+  }
+
+  const subjectId = Number(c.req.query("subjectId"));
+  if (!subjectId) return c.json({ error: "subjectId is required" }, 400);
+
+  const rows = await query(
+    `SELECT id, unit_no AS "unitNo", name FROM units WHERE subject_id = $1 ORDER BY unit_no`,
+    [subjectId]
+  );
+  return c.json({ ok: true, units: rows });
+});
+
+// Admin: Add a unit to a subject
+admin.post("/units", async (c) => {
+  const key = c.req.header("x-admin-key") || c.req.query("key");
+  if (!isValidAdminKey(key)) {
+    return c.json({ error: "Unauthorized: Invalid admin key" }, 401);
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  const subjectId = Number(body.subjectId);
+  const unitNo = Number(body.unitNo);
+  const name = String(body.name ?? "").trim();
+
+  if (!subjectId || !unitNo || !name) {
+    return c.json({ error: "subjectId, unitNo and name are required" }, 400);
+  }
+
+  try {
+    const rows = await query(
+      `INSERT INTO units (subject_id, unit_no, name) VALUES ($1, $2, $3)
+       RETURNING id, unit_no AS "unitNo", name`,
+      [subjectId, unitNo, name]
+    );
+    return c.json({ ok: true, unit: rows[0] }, 201);
+  } catch (err: any) {
+    if (err.message?.includes("unique") || err.code === "23505") {
+      return c.json({ error: `Unit ${unitNo} already exists for this subject` }, 409);
+    }
+    if (err.message?.includes("check") || err.code === "23514") {
+      return c.json({ error: "Unit number must be between 1 and 10" }, 400);
+    }
+    throw err;
+  }
+});
+
+// Admin: Delete a unit
+admin.delete("/units/:id", async (c) => {
+  const key = c.req.header("x-admin-key") || c.req.query("key");
+  if (!isValidAdminKey(key)) {
+    return c.json({ error: "Unauthorized: Invalid admin key" }, 401);
+  }
+
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id)) return c.json({ error: "Invalid unit id" }, 400);
+
+  const rows = await query(`SELECT id FROM units WHERE id = $1`, [id]);
+  if (!rows.length) return c.json({ error: "Unit not found" }, 404);
+
+  await query("DELETE FROM units WHERE id = $1", [id]);
+  return c.json({ ok: true, message: "Unit deleted.", id });
+});
+
 export default admin;
