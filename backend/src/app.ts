@@ -1,5 +1,14 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+
+// Fail fast if required secrets are not set — never rely on hardcoded fallbacks
+const REQUIRED_ENV = ["BETTER_AUTH_SECRET", "ADMIN_SECRET_KEY", "DATABASE_URL"] as const;
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`[Startup] Missing required environment variable: ${key}`);
+    process.exit(1);
+  }
+}
 import { query } from "./db.js";
 import ai from "./routes/ai.js";
 import admin from "./routes/admin.js";

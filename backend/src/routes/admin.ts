@@ -5,7 +5,8 @@ import { storageService } from "../services/storage.service.js";
 const admin = new Hono();
 
 export function isValidAdminKey(key?: string | null): boolean {
-  const expectedKey = process.env.ADMIN_SECRET_KEY || "rkhub-admin-2026";
+  const expectedKey = process.env.ADMIN_SECRET_KEY;
+  if (!expectedKey) return false; // deny all admin access if env var not configured
   return Boolean(key && key.trim() === expectedKey.trim());
 }
 

@@ -21,7 +21,7 @@ const trustedOrigins = [
 export const auth = betterAuth({
   database: pool,
   baseURL,
-  secret: process.env.BETTER_AUTH_SECRET || "rkhub-better-auth-secret-key-32chars-min-change-in-production",
+  secret: process.env.BETTER_AUTH_SECRET!,
   user: {
     modelName: "users",
   },
