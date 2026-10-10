@@ -1,154 +1,185 @@
-# RKhub Full Stack
+
+# 🎓 RKhub — College Learning Resource Platform
+
+<p align="center">
+  <b>One platform for college notes, previous-year questions, syllabi, and AI-assisted exam preparation.</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/mdsabit05/RKhub">
+    <img src="https://img.shields.io/badge/Project-RKhub-2563EB?style=for-the-badge" alt="RKhub" />
+  </a>
+  <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-3178C6?style=for-the-badge" alt="Frontend" />
+  <img src="https://img.shields.io/badge/Backend-Hono-E36002?style=for-the-badge" alt="Backend" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=for-the-badge" alt="Database" />
+</p>
+
+---
+
+## 📖 About
+
+RKhub is a college learning resource platform designed to help students access academic materials in one place.
+
+It organizes study resources by academic year, course, semester, subject, and unit, making it easier for students to find the material they need.
+
+The project also explores AI-assisted academic search and exam preparation using natural-language queries.
+
+## ✨ Features
+
+### 📚 Academic Resources
+- Subject-wise and unit-wise study notes
+- Previous-year question papers (PYQs)
+- College syllabus and reference materials
+- Structured navigation across academic years, courses, and semesters
+
+### 🤖 AI Academic Assistant
+- Search for learning resources using natural-language queries
+- Find relevant notes and previous-year papers
+- Explore syllabus information
+- Generate exam-question suggestions using available academic resources and configured AI services
+
+### 🛡️ Administration
+- Protected administrative interface
+- Resource management and PDF uploads
+- Configurable storage providers
+- Backend endpoints for resource operations
+
+*Features depend on the current deployment configuration and available academic data.*
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React, TypeScript, Vite |
+| Backend | Hono, TypeScript, Node.js |
+| Database | PostgreSQL |
+| Database access | PostgreSQL client / project database utilities |
+| AI integration | Configurable Gemini integration |
+| File storage | Local storage or supported S3-compatible providers |
+| Deployment | Render configuration |
+
+## 🔄 Resource Navigation
+
+The platform uses structured navigation to help students locate materials.
+
+| Resource | Navigation flow |
+|---|---|
+| Notes | Year → Course → Semester → Subject → Unit → PDF |
+| PYQs | Year → Course → Semester → Subject → Unit → PDF |
+| Syllabus | Year → Course → Semester → Subject → PDF |
+| Reference | Year → Course → Semester → Subject → Unit → Materials |
+
+## 🏗️ Architecture
 
 ```text
-React + Vite
-      ↓
-Hono + TypeScript API
-      ↓
-PostgreSQL
+RKhub
+├── frontend/       # React + Vite application
+├── backend/        # Hono API and server logic
+│   ├── src/
+│   └── public/
+├── render.yaml     # Deployment configuration
+└── README.md
 ```
 
-## Start backend
+The frontend communicates with the backend API, which handles academic resource operations, database access, and configured AI services.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js compatible with the project's dependencies
+- npm
+- PostgreSQL database
+- Git
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/mdsabit05/RKhub.git
+cd RKhub
+```
+
+### 2. Configure the backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env     # edit DATABASE_URL + ADMIN_SECRET_KEY
+```
+
+Create your local environment file from the provided example:
+
+```bash
+cp .env.example .env
+```
+
+Configure the required database connection and other environment variables using the project's actual configuration.
+
+Initialize and seed the database if required by the project:
+
+```bash
 npm run db:init
 npm run db:seed
+```
+
+Start the backend:
+
+```bash
 npm run dev
 ```
 
-## Start frontend
+### 3. Start the frontend
 
-Open another terminal:
+Open a second terminal:
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env
+```
+
+Create the frontend environment file if required by the project and configure the backend API URL.
+
+Start the frontend:
+
+```bash
 npm run dev
 ```
 
-| Service | URL |
-|---|---|
-| Frontend | `http://localhost:5173` |
-| Backend API | `http://localhost:8787` |
-| Health check | `http://localhost:8787/health` |
+Use the local URL printed by Vite in your terminal.
 
----
+> Verify the script names and environment-file paths against the current repository before running these commands. Do not commit local `.env` files or credentials.
 
-## Resource navigation flows
+## 🧪 Testing
 
-```
-Notes:     Year → Course → Semester → Subject → Unit → PDF
-PYQs:      Year → Course → Semester → Subject → Unit → PDF
-Syllabus:  Year → Course → Semester → Subject → PDF
-Reference: Year → Course → Semester → Subject → Unit → materials/links
-```
-
----
-
-## Admin portal
-
-The `/admin` page in the frontend is **protected by a passcode gate**.
-
-Default key (set in `backend/.env`):
-```
-ADMIN_SECRET_KEY=rkhub-admin-2026
-```
-
-Change this before deploying. The key is verified via `POST /api/admin/verify`.
-Uploads require the key in the `x-admin-key` request header.
-
----
-
-## AI Academic Assistant
-
-The home page AI composer supports natural language queries:
-
-- `Give me BCA 2nd year DBMS Unit 1 notes`
-- `Find the 2025 DBMS PYQ`
-- `Show me BCA syllabus`
-- `Predict DBMS exam questions`
-
-### Gemini integration (optional)
-
-To enable real Gemini-powered conversational answers and exam prediction:
-
-```env
-GEMINI_API_KEY=your_api_key_here
-```
-
-Without the key the assistant still searches PostgreSQL with the keyword matching engine.
-
----
-
-## Storage
-
-PDF uploads default to local disk (`backend/public/pdfs/...`).
-To use cloud storage set in `backend/.env`:
-
-```env
-STORAGE_PROVIDER=s3   # or r2 / supabase
-S3_ENDPOINT=https://...
-S3_BUCKET=rkhub-pdfs
-S3_ACCESS_KEY_ID=...
-S3_SECRET_ACCESS_KEY=...
-S3_PUBLIC_DOMAIN=https://cdn.example.com
-```
-
----
-
-## Run tests
+Run the backend tests from the backend directory:
 
 ```bash
-cd backend
 npm test
 ```
 
-Runs 8 integration tests covering health, admin auth, protected upload, and AI assistant queries.
+The repository documentation describes integration tests for health checks, admin authentication, protected uploads, and AI assistant queries. Test coverage may change as the project evolves.
+
+## 🔐 Security
+
+- Keep database credentials and API keys in environment variables.
+- Use strong, unique admin secrets.
+- Validate and authorize protected administrative operations on the server.
+- Restrict file uploads and validate uploaded content.
+- Never commit credentials, private user data, or production secrets.
+
+## 🎯 Project Goals
+
+RKhub aims to make college academic resources easier to discover and help students prepare for exams through structured materials and AI-assisted search.
+
+## 👨‍💻 Developer
+
+**Sabit Raza**
+
+- GitHub: [@mdsabit05](https://github.com/mdsabit05)
+- Portfolio: [Visit my portfolio](https://mdsabit05.github.io/My-Profile/)
 
 ---
 
-## Project structure
+<p align="center">
+  Built to make college learning resources easier to access. 🚀
+</p>
 
-```
-rkhub-fullstack/
-├── backend/
-│   ├── src/
-│   │   ├── app.ts                   # Hono app + CORS + routes
-│   │   ├── db.ts                    # PostgreSQL pool
-│   │   ├── index.ts                 # HTTP server entry
-│   │   ├── routes/
-│   │   │   ├── resources.ts         # Resource CRUD + upload
-│   │   │   ├── ai.ts                # AI chat endpoint
-│   │   │   └── admin.ts             # Admin key verification
-│   │   └── services/
-│   │       ├── ai.service.ts        # Intent detection + Gemini
-│   │       └── storage.service.ts   # Local / S3 / R2 / Supabase
-│   └── sql/
-│       ├── schema.sql
-│       └── seed.sql                 # BCA + BBA full curriculum
-│
-└── frontend/
-    └── src/
-        ├── App.jsx                  # Top-level router
-        ├── main.jsx                 # React root mount
-        ├── api.js                   # Fetch client
-        ├── components/              # Shared UI components
-        │   ├── Header.jsx
-        │   ├── Footer.jsx
-        │   ├── AiComposer.jsx
-        │   ├── Choice.jsx
-        │   ├── Document.jsx
-        │   ├── Materials.jsx
-        │   ├── Selection.jsx
-        │   └── SubjectList.jsx
-        ├── pages/                   # Route-level page components
-        │   ├── Home.jsx
-        │   ├── ResourcePage.jsx
-        │   └── AdminPage.jsx
-        └── constants/
-            └── resources.js         # Resource metadata
-```
