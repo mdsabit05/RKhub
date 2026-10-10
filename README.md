@@ -54,8 +54,8 @@ The project also explores AI-assisted academic search and exam preparation using
 | Backend | Hono, TypeScript, Node.js |
 | Database | PostgreSQL |
 | Database access | PostgreSQL client / project database utilities |
-| AI integration | Configurable Gemini integration |
-| File storage | Local storage or supported S3-compatible providers |
+| AI integration | NVIDIA AI |
+| File storage |B2|
 | Deployment | Render configuration |
 
 ## 🔄 Resource Navigation
