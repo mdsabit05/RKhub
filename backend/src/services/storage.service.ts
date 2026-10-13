@@ -18,6 +18,8 @@ export interface IStorageService {
   upload(options: UploadOptions): Promise<UploadResult>;
   delete(fileUrl: string): Promise<void>;
   proxyFile(fileUrl: string): Promise<Response>;
+  signUrl(fileUrl: string | null | undefined): Promise<string | null>;
+  signResources<T extends Record<string, any>>(rows: T[]): Promise<T[]>;
 }
 
 class LocalStorageService implements IStorageService {
@@ -95,11 +97,20 @@ class LocalStorageService implements IStorageService {
       return new Response("Not found", { status: 404 });
     }
   }
+
+  async signUrl(fileUrl: string | null | undefined): Promise<string | null> {
+    return fileUrl ?? null;
+  }
+
+  async signResources<T extends Record<string, any>>(rows: T[]): Promise<T[]> {
+    return rows;
+  }
 }
 
 /**
  * Native Backblaze B2 cloud storage service.
- * Supports direct uploads via Backblaze B2 API using native fetch and SHA1 hashing.
+ * Supports direct uploads via Backblaze B2 API using native fetch and SHA1 hashing,
+ * plus automatic download token signing for private buckets.
  */
 class BackblazeB2StorageService implements IStorageService {
   private keyId: string;
@@ -111,6 +122,10 @@ class BackblazeB2StorageService implements IStorageService {
     apiUrl: string;
     authToken: string;
     downloadUrl: string;
+    expiresAt: number;
+  } | null = null;
+  private cachedDownloadToken: {
+    token: string;
     expiresAt: number;
   } | null = null;
 
@@ -149,6 +164,93 @@ class BackblazeB2StorageService implements IStorageService {
     };
 
     return this.cachedAuth;
+  }
+
+  private async getDownloadToken(): Promise<string | null> {
+    if (!this.keyId || !this.applicationKey) {
+      return null;
+    }
+
+    if (this.cachedDownloadToken && Date.now() < this.cachedDownloadToken.expiresAt) {
+      return this.cachedDownloadToken.token;
+    }
+
+    try {
+      const auth = await this.getAuth();
+
+      // Request a long-lived download authorization token for the bucket (valid 7 days)
+      const res = await fetch(`${auth.apiUrl}/b2api/v3/b2_get_download_authorization`, {
+        method: "POST",
+        headers: {
+          Authorization: auth.authToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bucketId: this.bucketId,
+          fileNamePrefix: "",
+          validDurationInSeconds: 604800, // 7 days (max allowed by B2)
+        }),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        if (data.authorizationToken) {
+          this.cachedDownloadToken = {
+            token: data.authorizationToken,
+            expiresAt: Date.now() + 20 * 60 * 60 * 1000, // refresh every 20 hours
+          };
+          return data.authorizationToken;
+        }
+      }
+
+      // Fallback to main account authorizationToken (which also grants readFiles access)
+      this.cachedDownloadToken = {
+        token: auth.authToken,
+        expiresAt: auth.expiresAt,
+      };
+      return auth.authToken;
+    } catch (err: any) {
+      console.warn(`[Storage] Failed to get B2 download authorization token: ${err.message}`);
+      return null;
+    }
+  }
+
+  async signUrl(fileUrl: string | null | undefined): Promise<string | null> {
+    if (!fileUrl) return null;
+    if (!fileUrl.includes("backblazeb2.com/file/")) {
+      return fileUrl;
+    }
+
+    const token = await this.getDownloadToken();
+    if (!token) {
+      return fileUrl;
+    }
+
+    const baseUrl = fileUrl.split("?")[0];
+    return `${baseUrl}?Authorization=${encodeURIComponent(token)}`;
+  }
+
+  async signResources<T extends Record<string, any>>(rows: T[]): Promise<T[]> {
+    if (!rows || rows.length === 0) return rows;
+    const hasB2Urls = rows.some(
+      (r) => typeof r.fileUrl === "string" && r.fileUrl.includes("backblazeb2.com/file/")
+    );
+    if (!hasB2Urls) return rows;
+
+    const token = await this.getDownloadToken();
+    if (!token) return rows;
+
+    const encodedToken = encodeURIComponent(token);
+    return rows.map((row) => {
+      if (typeof row.fileUrl === "string" && row.fileUrl.includes("backblazeb2.com/file/")) {
+        const baseUrl = row.fileUrl.split("?")[0];
+        return {
+          ...row,
+          fileUrl: `${baseUrl}?Authorization=${encodedToken}`,
+        };
+      }
+      return row;
+    });
   }
 
   async upload(options: UploadOptions): Promise<UploadResult> {
@@ -199,7 +301,7 @@ class BackblazeB2StorageService implements IStorageService {
         throw new Error(`Backblaze B2 upload failed: ${uploadRes.status} ${await uploadRes.text()}`);
       }
 
-      // Public URL on Backblaze B2
+      // Base URL on Backblaze B2
       const fileUrl = `${auth.downloadUrl}/file/${this.bucketName}/${b2FileName}`;
 
       return {
@@ -226,11 +328,11 @@ class BackblazeB2StorageService implements IStorageService {
     try {
       const auth = await this.getAuth();
 
-      let b2FileName = fileUrl;
+      let b2FileName = fileUrl.split("?")[0];
       const marker = `/file/${this.bucketName}/`;
-      const idx = fileUrl.indexOf(marker);
+      const idx = b2FileName.indexOf(marker);
       if (idx !== -1) {
-        b2FileName = decodeURIComponent(fileUrl.substring(idx + marker.length));
+        b2FileName = decodeURIComponent(b2FileName.substring(idx + marker.length));
       }
 
       const listRes = await fetch(
@@ -280,7 +382,8 @@ class BackblazeB2StorageService implements IStorageService {
     }
     try {
       const auth = await this.getAuth();
-      const res = await fetch(fileUrl, {
+      const cleanUrl = fileUrl.split("?")[0];
+      const res = await fetch(cleanUrl, {
         headers: { Authorization: auth.authToken },
       });
       return new Response(res.body, {
@@ -395,6 +498,14 @@ class S3CompatibleStorageService implements IStorageService {
         "Content-Disposition": "inline",
       },
     });
+  }
+
+  async signUrl(fileUrl: string | null | undefined): Promise<string | null> {
+    return fileUrl ?? null;
+  }
+
+  async signResources<T extends Record<string, any>>(rows: T[]): Promise<T[]> {
+    return rows;
   }
 }
 

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import OpenAI from "openai";
 import { query } from "../db.js";
+import { storageService } from "../services/storage.service.js";
 
 const askRouter = new Hono();
 
@@ -168,7 +169,8 @@ askRouter.post("/", async (c) => {
     });
   }
 
-  return c.json({ resource: rows[0], subject, intent });
+  const signedRows = await storageService.signResources(rows);
+  return c.json({ resource: signedRows[0], subject, intent });
 });
 
 export default askRouter;

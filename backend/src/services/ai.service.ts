@@ -1,4 +1,5 @@
 import { query } from "../db.js";
+import { storageService } from "./storage.service.js";
 
 export type AcademicIntent =
   | "FIND_NOTES"
@@ -635,7 +636,7 @@ Format as:
           subjectName: res.subjectName,
           unitNo: res.unitNo,
           unitName: res.unitName,
-          fileUrl: res.fileUrl,
+          fileUrl: await storageService.signUrl(res.fileUrl),
           externalUrl: res.externalUrl,
         },
       };
@@ -661,7 +662,7 @@ Format as:
       subjectName: resource.subjectName,
       unitNo: resource.unitNo,
       unitName: resource.unitName,
-      fileUrl: resource.fileUrl,
+      fileUrl: await storageService.signUrl(resource.fileUrl),
       externalUrl: resource.externalUrl,
     },
   };

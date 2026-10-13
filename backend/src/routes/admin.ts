@@ -57,10 +57,11 @@ admin.get("/resources", async (c) => {
   `;
 
   const rows = await query(sql);
+  const signedRows = await storageService.signResources(rows);
   return c.json({
     ok: true,
-    total: rows.length,
-    resources: rows,
+    total: signedRows.length,
+    resources: signedRows,
   });
 });
 

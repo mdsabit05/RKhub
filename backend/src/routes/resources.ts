@@ -165,7 +165,8 @@ resources.get("/list", async (c) => {
 
   sql += " ORDER BY r.created_at DESC, r.id DESC";
   const rows = await query(sql, params);
-  return c.json({ resources: rows });
+  const signedRows = await storageService.signResources(rows);
+  return c.json({ resources: signedRows });
 });
 
 resources.get("/resolve", async (c) => {
@@ -220,7 +221,8 @@ resources.get("/resolve", async (c) => {
   }
 
   sql += " ORDER BY r.created_at DESC, r.id DESC";
-  return c.json(await query(sql, params));
+  const rows = await query(sql, params);
+  return c.json(await storageService.signResources(rows));
 });
 
 resources.post("/upload", async (c) => {
@@ -275,7 +277,8 @@ resources.post("/upload", async (c) => {
        RETURNING id, title, file_url AS "fileUrl", uploaded_by AS "uploadedBy", file_size AS "fileSize", created_at AS "createdAt"`,
       [type, title || "Complete 4-Year Syllabus", "Complete course syllabus", uploadResult.fileUrl, uploaderId, fileBuffer.length]
     );
-    return c.json({ message: "Resource uploaded successfully.", resource: insertResult[0] }, 201);
+    const signedComplete = await storageService.signResources(insertResult);
+    return c.json({ message: "Resource uploaded successfully.", resource: signedComplete[0] }, 201);
   }
 
   if (!file || !(file instanceof File)) {
@@ -334,7 +337,8 @@ resources.post("/upload", async (c) => {
        RETURNING id, title, file_url AS "fileUrl", uploaded_by AS "uploadedBy", file_size AS "fileSize", created_at AS "createdAt"`,
       [type, year, semester, title || `${course} Semester ${semester} Syllabus`, "Semester syllabus", uploadResult.fileUrl, uploaderId, fileBuffer.length]
     );
-    return c.json({ message: "Resource uploaded successfully.", resource: insertResult[0] }, 201);
+    const signedSemSyllabus = await storageService.signResources(insertResult);
+    return c.json({ message: "Resource uploaded successfully.", resource: signedSemSyllabus[0] }, 201);
   }
 
   if (!subject) {
@@ -397,11 +401,14 @@ resources.post("/upload", async (c) => {
     ]
   );
 
+  const signedUrl = await storageService.signUrl(relativeUrl);
+  const signedResources = await storageService.signResources(insertResult);
+
   return c.json({
     message: "Resource uploaded successfully.",
-    fileUrl: relativeUrl,
+    fileUrl: signedUrl,
     storage: uploadResult.storageProvider,
-    resource: insertResult[0],
+    resource: signedResources[0],
   }, 201);
 });
 
@@ -448,7 +455,8 @@ resources.get("/:id", async (c) => {
   );
 
   if (!rows.length) return c.json({ error: "Resource not found" }, 404);
-  return c.json(rows[0]);
+  const signedRows = await storageService.signResources(rows);
+  return c.json(signedRows[0]);
 });
 
 resources.delete("/:id", async (c) => {
