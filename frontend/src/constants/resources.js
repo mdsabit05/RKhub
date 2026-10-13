@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   FileText,
   GraduationCap,
   Library,
@@ -14,7 +13,7 @@ export const resourceMeta = {
   },
   pyq: {
     title: "Previous Year Questions",
-    description: "Browse question papers by semester, subject and unit.",
+    description: "Browse question papers by semester and subject.",
     icon: Search,
   },
   syllabus: {

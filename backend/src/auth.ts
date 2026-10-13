@@ -74,8 +74,8 @@ export async function authenticateUser(c: Context): Promise<AuthUser | null> {
   const authHeader = c.req.header("authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-  // Support test mock tokens during automated test runs
-  if (token && token.startsWith("test:")) {
+  // Support test mock tokens during automated non-production test runs
+  if (process.env.NODE_ENV !== "production" && token && token.startsWith("test:")) {
     const parts = token.split(":");
     const testId = parts[1];
     const testName = parts[2];

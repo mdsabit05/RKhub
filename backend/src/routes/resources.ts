@@ -504,11 +504,7 @@ resources.delete("/:id", async (c) => {
     try {
       await storageService.delete(resource.fileUrl);
     } catch (err: any) {
-      console.error("Storage deletion failed:", err);
-      return c.json({
-        error: "Failed to delete file from storage. Database record was preserved.",
-        details: err.message,
-      }, 500);
+      console.warn("Storage deletion warning:", err);
     }
   }
 

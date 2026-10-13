@@ -3,8 +3,6 @@ import { ArrowLeft, ChevronRight, Download, ExternalLink, FileText, Upload, X } 
 import { useSession } from "../lib/auth-client";
 import { API_URL, api } from "../api";
 import { Choice } from "../components/Choice";
-import { Document } from "../components/Document";
-import { Materials } from "../components/Materials";
 import { ResourcePdfList } from "../components/ResourcePdfList";
 import { Selection } from "../components/Selection";
 import { SubjectList } from "../components/SubjectList";
@@ -321,7 +319,7 @@ export function ResourcePage({ type, go }) {
 
   const chooseSubject = (value) =>
     pushStep({
-      step: type === "syllabus" ? "document" : type === "pyq" ? "pdf-list" : "unit",
+      step: type === "pyq" ? "pdf-list" : "unit",
       year,
       course,
       semester,
@@ -331,7 +329,7 @@ export function ResourcePage({ type, go }) {
 
   const chooseUnit = (value) =>
     pushStep({
-      step: type === "syllabus" ? "document" : "pdf-list",
+      step: "pdf-list",
       year,
       course,
       semester,
@@ -505,18 +503,6 @@ export function ResourcePage({ type, go }) {
           loading={loading}
           error={error}
           onUploaded={fetchResources}
-          onBack={() => window.history.back()}
-        />
-      )}
-
-      {step === "document" && subject && (
-        <Document
-          type={type}
-          year={year}
-          course={course}
-          semester={semester}
-          subject={subject}
-          unit={unit}
           onBack={() => window.history.back()}
         />
       )}
