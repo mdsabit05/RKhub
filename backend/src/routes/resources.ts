@@ -427,7 +427,13 @@ resources.get("/:id/file", async (c) => {
     return c.json({ error: "Resource not found" }, 404);
   }
 
-  return storageService.proxyFile(rows[0].fileUrl);
+  const fileUrl = rows[0].fileUrl;
+  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+    const signedUrl = await storageService.signUrl(fileUrl);
+    return c.redirect(signedUrl || fileUrl, 302);
+  }
+
+  return storageService.proxyFile(fileUrl);
 });
 
 resources.get("/:id", async (c) => {

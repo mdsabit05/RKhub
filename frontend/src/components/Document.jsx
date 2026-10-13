@@ -88,7 +88,9 @@ export function Document({ type, year, course, semester, subject, unit, onBack }
   };
 
   const rawUrl = resource?.fileUrl || resource?.externalUrl;
-  const resourceUrl = rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl;
+  const resourceUrl = rawUrl?.startsWith("/")
+    ? `${API_URL}${rawUrl}`
+    : resource ? `${API_URL}/api/resources/${resource.id}/file` : rawUrl;
 
   const defaultTitle = `${subject.code} - ${unit ? unit.name : "Syllabus"} ${
     type === "notes" ? "Notes" : type === "pyq" ? "PYQ" : "Syllabus"

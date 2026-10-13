@@ -25,7 +25,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { api } from "../api";
+import { api, API_URL } from "../api";
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return "0 B";
@@ -1231,7 +1231,7 @@ export function AdminPage({ go }) {
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           {item.fileUrl && (
                             <a
-                              href={item.fileUrl}
+                              href={item.fileUrl?.startsWith("/") ? `${API_URL}${item.fileUrl}` : `${API_URL}/api/resources/${item.id}/file`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="secondary-action"

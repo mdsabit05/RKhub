@@ -82,6 +82,21 @@ class LocalStorageService implements IStorageService {
   }
 
   async proxyFile(fileUrl: string): Promise<Response> {
+    if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+      try {
+        const res = await fetch(fileUrl);
+        return new Response(res.body, {
+          status: res.status,
+          headers: {
+            "Content-Type": res.headers.get("Content-Type") || "application/pdf",
+            "Content-Disposition": "inline",
+          },
+        });
+      } catch {
+        return new Response("Failed to fetch file", { status: 502 });
+      }
+    }
+
     const prefix = "/pdfs/";
     if (!fileUrl.startsWith(prefix)) {
       return new Response("Not found", { status: 404 });
@@ -381,11 +396,17 @@ class BackblazeB2StorageService implements IStorageService {
       return fallback.proxyFile(fileUrl);
     }
     try {
-      const auth = await this.getAuth();
       const cleanUrl = fileUrl.split("?")[0];
-      const res = await fetch(cleanUrl, {
-        headers: { Authorization: auth.authToken },
-      });
+      const headers: Record<string, string> = {};
+      try {
+        const auth = await this.getAuth();
+        if (auth && auth.authToken) {
+          headers["Authorization"] = auth.authToken;
+        }
+      } catch (authErr: any) {
+        console.warn("[Storage] B2 authorization unavailable for proxy, attempting direct fetch:", authErr?.message);
+      }
+      const res = await fetch(cleanUrl, { headers });
       return new Response(res.body, {
         status: res.status,
         headers: {
@@ -510,9 +531,13 @@ class S3CompatibleStorageService implements IStorageService {
 }
 
 export function getStorageService(): IStorageService {
-  const provider = (process.env.STORAGE_PROVIDER || "local").toLowerCase();
+  const provider = (process.env.STORAGE_PROVIDER || "").toLowerCase();
 
-  if (provider === "b2" || provider === "backblaze") {
+  if (
+    provider === "b2" ||
+    provider === "backblaze" ||
+    Boolean(process.env.B2_KEY_ID || process.env.B2_APPLICATION_KEY || process.env.B2_BUCKET_NAME)
+  ) {
     return new BackblazeB2StorageService();
   }
 

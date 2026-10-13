@@ -190,8 +190,12 @@ export function Materials({ course, year, semester, subject, unit, resources, lo
       <div className="material-list">
         {resources.map((resource) => {
           const rawUrl = resource.fileUrl || resource.externalUrl;
-          const url = rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl;
           const isExternal = !resource.fileUrl && Boolean(resource.externalUrl);
+          const url = isExternal
+            ? rawUrl
+            : rawUrl?.startsWith("/")
+              ? `${API_URL}${rawUrl}`
+              : `${API_URL}/api/resources/${resource.id}/file`;
 
           return (
             <div className="material-row" key={resource.id}>
