@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Download,
+  Loader2,
   ExternalLink,
   FileText,
   Plus,
@@ -13,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useSession } from "../lib/auth-client";
-import { API_URL, api } from "../api";
+import { API_URL, api, downloadPdf } from "../api";
 
 function formatFileSize(bytes) {
   if (!bytes || isNaN(bytes)) return "—";
@@ -70,6 +71,19 @@ export function ResourcePdfList({
 
   // Delete modal state
   const [deletingResource, setDeletingResource] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownload = async (url, title, id) => {
+    if (downloadingId) return;
+    setDownloadingId(id);
+    try {
+      await downloadPdf(url, title || "document");
+    } catch (err) {
+      console.error("Download failed:", err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -375,7 +389,7 @@ export function ResourcePdfList({
                 <tbody>
                   {filteredResources.map((res, index) => {
                     const rawUrl = res.fileUrl || res.externalUrl;
-                    const url = rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : `${API_URL}/api/resources/${res.id}/file`;
+                    const url = res.id ? `${API_URL}/api/resources/${res.id}/file` : (rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl);
                     const isOwner = Boolean(user && res.uploadedBy && res.uploadedBy === user.id);
                     const uploaderDisplay =
                       res.uploaderName ||
@@ -413,17 +427,26 @@ export function ResourcePdfList({
                         </td>
                         <td>
                           <div className="pdf-row-actions">
-                            <a
+                            <button
+                              type="button"
                               className="action-btn action-download"
-                              href={url}
-                              target="_blank"
-                              rel="noreferrer"
-                              download={res.title ? `${res.title}.pdf` : true}
+                              onClick={() => handleDownload(url, res.title, res.id)}
+                              disabled={downloadingId === res.id}
+                              style={{ cursor: downloadingId === res.id ? "wait" : "pointer" }}
                               title="Download PDF file"
                             >
-                              <Download size={14} />
-                              <span>Download</span>
-                            </a>
+                              {downloadingId === res.id ? (
+                                <>
+                                  <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                                  <span>Downloading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download size={14} />
+                                  <span>Download</span>
+                                </>
+                              )}
+                            </button>
 
                             {isOwner && (
                               <button
@@ -449,9 +472,9 @@ export function ResourcePdfList({
             <div className="pdf-mobile-cards mobile-only">
               {filteredResources.map((res) => {
                 const rawUrl = res.fileUrl || res.externalUrl;
-                const url = rawUrl?.startsWith("/")
-                  ? `${API_URL}${rawUrl}`
-                  : `${API_URL}/api/resources/${res.id}/file`;
+                const url = res.id
+                  ? `${API_URL}/api/resources/${res.id}/file`
+                  : (rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl);
                 const isOwner = Boolean(user && res.uploadedBy && res.uploadedBy === user.id);
                 const uploaderDisplay =
                   res.uploaderName ||
@@ -482,16 +505,25 @@ export function ResourcePdfList({
                     </div>
 
                     <div className="pdf-card-mobile-actions">
-                      <a
+                      <button
+                        type="button"
                         className="action-btn action-download"
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        download={res.title ? `${res.title}.pdf` : true}
+                        onClick={() => handleDownload(url, res.title, res.id)}
+                        disabled={downloadingId === res.id}
+                        style={{ cursor: downloadingId === res.id ? "wait" : "pointer" }}
                       >
-                        <Download size={14} />
-                        <span>Download</span>
-                      </a>
+                        {downloadingId === res.id ? (
+                          <>
+                            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                            <span>Downloading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download size={14} />
+                            <span>Download</span>
+                          </>
+                        )}
+                      </button>
 
                       {isOwner && (
                         <button

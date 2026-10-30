@@ -34,9 +34,13 @@ app.use("*", cors({
   },
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "x-admin-key", "Cookie"],
-  exposeHeaders: ["set-auth-token"],
+  exposeHeaders: ["set-auth-token", "Content-Disposition"],
   credentials: true,
 }));
+app.use("/pdfs/*", async (c, next) => {
+  await next();
+  c.res.headers.set("Content-Disposition", "attachment");
+});
 app.use(
   "/pdfs/*",
   serveStatic({

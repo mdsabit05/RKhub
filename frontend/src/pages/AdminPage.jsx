@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Database,
   Download,
+  Loader2,
   ExternalLink,
   FileCheck,
   FileText,
@@ -26,7 +27,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { api, API_URL } from "../api";
+import { api, API_URL, downloadPdf } from "../api";
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return "0 B";
@@ -71,6 +72,19 @@ export function AdminPage({ go }) {
 
   // Deletion modal / state
   const [deletingId, setDeletingId] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleAdminDownload = async (url, title, id) => {
+    if (downloadingId) return;
+    setDownloadingId(id);
+    try {
+      await downloadPdf(url, title || "document");
+    } catch (err) {
+      console.error("Download failed:", err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
   const [confirmDeleteTarget, setConfirmDeleteTarget] = useState(null);
   const [alertNotice, setAlertNotice] = useState(null);
 
@@ -1231,11 +1245,13 @@ export function AdminPage({ go }) {
                         {/* Right: Actions */}
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           {item.fileUrl && (
-                            <a
-                              href={item.fileUrl?.startsWith("/") ? `${API_URL}${item.fileUrl}` : `${API_URL}/api/resources/${item.id}/file`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              download={item.title ? `${item.title}.pdf` : true}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const dlUrl = item.id ? `${API_URL}/api/resources/${item.id}/file` : (item.fileUrl?.startsWith("/") ? `${API_URL}${item.fileUrl}` : item.fileUrl);
+                                handleAdminDownload(dlUrl, item.title, item.id);
+                              }}
+                              disabled={downloadingId === item.id}
                               className="secondary-action"
                               style={{
                                 minHeight: 36,
@@ -1244,12 +1260,21 @@ export function AdminPage({ go }) {
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: 6,
-                                textDecoration: "none",
+                                cursor: downloadingId === item.id ? "wait" : "pointer",
                               }}
                             >
-                              <Download size={13} />
-                              <span>Download PDF</span>
-                            </a>
+                              {downloadingId === item.id ? (
+                                <>
+                                  <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                                  <span>Downloading...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download size={13} />
+                                  <span>Download PDF</span>
+                                </>
+                              )}
+                            </button>
                           )}
 
                           <button

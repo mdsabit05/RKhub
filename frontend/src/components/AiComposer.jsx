@@ -1,8 +1,24 @@
 import React from "react";
-import { Download, ExternalLink, Send, Sparkles } from "lucide-react";
-import { API_URL } from "../api";
+import { Download, ExternalLink, Loader2, Send, Sparkles } from "lucide-react";
+import { API_URL, downloadPdf } from "../api";
 
 export function AiComposer({ prompt, setPrompt, notice, submit, go, aiResult }) {
+  const [downloading, setDownloading] = React.useState(false);
+
+  const handleDownload = async () => {
+    if (!aiResult?.resource || downloading) return;
+    setDownloading(true);
+    try {
+      const url = aiResult.resource.id
+        ? `${API_URL}/api/resources/${aiResult.resource.id}/file`
+        : (aiResult.resource.fileUrl.startsWith("/") ? `${API_URL}${aiResult.resource.fileUrl}` : aiResult.resource.fileUrl);
+      await downloadPdf(url, aiResult.resource.title || "document");
+    } catch (err) {
+      console.error("AI Download failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
   return (
     <>
       <div className="ai-composer">
@@ -63,22 +79,25 @@ export function AiComposer({ prompt, setPrompt, notice, submit, go, aiResult }) 
               )}
               <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
                 {aiResult.resource.fileUrl && (
-                  <a
+                  <button
+                    type="button"
                     className="primary-action"
-                    href={
-                      aiResult.resource.id
-                        ? `${API_URL}/api/resources/${aiResult.resource.id}/file`
-                        : aiResult.resource.fileUrl.startsWith("/")
-                          ? `${API_URL}${aiResult.resource.fileUrl}`
-                          : aiResult.resource.fileUrl
-                    }
-                    download={aiResult.resource.title ? `${aiResult.resource.title}.pdf` : true}
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={handleDownload}
+                    disabled={downloading}
+                    style={{ cursor: downloading ? "wait" : "pointer" }}
                   >
-                    <Download size={17} />
-                    Download PDF
-                  </a>
+                    {downloading ? (
+                      <>
+                        <Loader2 size={17} style={{ animation: "spin 1s linear infinite" }} />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={17} />
+                        Download PDF
+                      </>
+                    )}
+                  </button>
                 )}
                 {aiResult.resource.externalUrl && (
                   <a

@@ -120,3 +120,28 @@ export const api = {
 };
 
 export { API_URL };
+
+export async function downloadPdf(url, filename = "document.pdf") {
+  const safeName = filename?.toLowerCase().endsWith(".pdf") ? filename : `${filename || "document"}.pdf`;
+  try {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = safeName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
+  } catch (err) {
+    console.warn("Direct blob download failed, falling back to direct navigation:", err);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = safeName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}

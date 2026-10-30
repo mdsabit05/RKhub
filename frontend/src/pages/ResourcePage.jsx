@@ -17,6 +17,20 @@ function CompleteSyllabusCard() {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!resource || downloading) return;
+    setDownloading(true);
+    try {
+      const dlUrl = resource.id ? `${API_URL}/api/resources/${resource.id}/file` : url;
+      await downloadPdf(dlUrl, resource.title || "Complete_Syllabus");
+    } catch (err) {
+      console.error("Download failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
   const [success, setSuccess] = useState("");
 
   const fetchResource = () => {
@@ -74,9 +88,9 @@ function CompleteSyllabusCard() {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {url && (
-            <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download={resource?.title ? `${resource.title}.pdf` : "Complete_Syllabus.pdf"} title="Download complete syllabus">
-              <Download size={14} /><span>Download</span>
-            </a>
+            <button type="button" className="action-btn action-download" onClick={handleDownload} disabled={downloading} style={{ cursor: downloading ? "wait" : "pointer" }} title="Download complete syllabus">
+              {downloading ? (<><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /><span>Downloading...</span></>) : (<><Download size={14} /><span>Download</span></>)}
+            </button>
           )}
           <button
             className="action-btn"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   CheckCircle2,
   Download,
+  Loader2,
   ExternalLink,
   FileText,
   Plus,
@@ -10,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useSession } from "../lib/auth-client";
-import { API_URL, api } from "../api";
+import { API_URL, api, downloadPdf } from "../api";
 
 export function SyllabusList({ year, course, semester, onBack }) {
   const { data: session } = useSession();
@@ -24,6 +25,19 @@ export function SyllabusList({ year, course, semester, onBack }) {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownload = async (url, title, id) => {
+    if (downloadingId) return;
+    setDownloadingId(id);
+    try {
+      await downloadPdf(url, title || "document");
+    } catch (err) {
+      console.error("Download failed:", err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const fetchResources = () => {
     setLoading(true);
@@ -204,9 +218,7 @@ export function SyllabusList({ year, course, semester, onBack }) {
                 <tbody>
                   {resources.map((res, index) => {
                     const rawUrl = res.fileUrl || res.externalUrl;
-                    const url = rawUrl?.startsWith("/")
-                      ? `${API_URL}${rawUrl}`
-                      : `${API_URL}/api/resources/${res.id}/file`;
+                    const url = res.id ? `${API_URL}/api/resources/${res.id}/file` : (rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl);
                     return (
                       <tr key={res.id} className="pdf-table-row">
                         <td style={{ textAlign: "center", color: "#64748b", fontWeight: 600 }}>{index + 1}</td>
@@ -228,9 +240,9 @@ export function SyllabusList({ year, course, semester, onBack }) {
                         </td>
                         <td>
                           <div className="pdf-row-actions">
-                            <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download={res.title ? `${res.title}.pdf` : true} title="Download PDF">
-                              <Download size={14} /><span>Download</span>
-                            </a>
+                            <button type="button" className="action-btn action-download" onClick={() => handleDownload(url, res.title, res.id)} disabled={downloadingId === res.id} style={{ cursor: downloadingId === res.id ? "wait" : "pointer" }} title="Download PDF">
+                              {downloadingId === res.id ? (<><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /><span>Downloading...</span></>) : (<><Download size={14} /><span>Download</span></>)}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -244,9 +256,7 @@ export function SyllabusList({ year, course, semester, onBack }) {
             <div className="pdf-mobile-cards mobile-only">
               {resources.map((res) => {
                 const rawUrl = res.fileUrl || res.externalUrl;
-                const url = rawUrl?.startsWith("/")
-                  ? `${API_URL}${rawUrl}`
-                  : `${API_URL}/api/resources/${res.id}/file`;
+                const url = res.id ? `${API_URL}/api/resources/${res.id}/file` : (rawUrl?.startsWith("/") ? `${API_URL}${rawUrl}` : rawUrl);
                 return (
                   <div key={res.id} className="pdf-card-mobile">
                     <div className="pdf-card-mobile-top">
@@ -259,9 +269,9 @@ export function SyllabusList({ year, course, semester, onBack }) {
                       </div>
                     </div>
                     <div className="pdf-card-mobile-actions">
-                      <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download={res.title ? `${res.title}.pdf` : true}>
-                        <Download size={14} /><span>Download</span>
-                      </a>
+                      <button type="button" className="action-btn action-download" onClick={() => handleDownload(url, res.title, res.id)} disabled={downloadingId === res.id} style={{ cursor: downloadingId === res.id ? "wait" : "pointer" }}>
+                        {downloadingId === res.id ? (<><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /><span>Downloading...</span></>) : (<><Download size={14} /><span>Download</span></>)}
+                      </button>
                     </div>
                   </div>
                 );
