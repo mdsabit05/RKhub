@@ -74,14 +74,9 @@ function CompleteSyllabusCard() {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {url && (
-            <>
-              <a className="action-btn action-view" href={url} target="_blank" rel="noreferrer" title="View complete syllabus">
-                <ExternalLink size={14} /><span>View</span>
-              </a>
-              <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download title="Download complete syllabus">
-                <Download size={14} /><span>Download</span>
-              </a>
-            </>
+            <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download={resource?.title ? `${resource.title}.pdf` : "Complete_Syllabus.pdf"} title="Download complete syllabus">
+              <Download size={14} /><span>Download</span>
+            </a>
           )}
           <button
             className="action-btn"

@@ -89,7 +89,7 @@ class LocalStorageService implements IStorageService {
           status: res.status,
           headers: {
             "Content-Type": res.headers.get("Content-Type") || "application/pdf",
-            "Content-Disposition": "inline",
+            "Content-Disposition": "attachment",
           },
         });
       } catch {
@@ -106,7 +106,7 @@ class LocalStorageService implements IStorageService {
     try {
       const buffer = await fs.readFile(absolutePath);
       return new Response(buffer, {
-        headers: { "Content-Type": "application/pdf" },
+        headers: { "Content-Type": "application/pdf", "Content-Disposition": "attachment" },
       });
     } catch {
       return new Response("Not found", { status: 404 });
@@ -412,7 +412,7 @@ class BackblazeB2StorageService implements IStorageService {
         status: res.status,
         headers: {
           "Content-Type": res.headers.get("Content-Type") || "application/pdf",
-          "Content-Disposition": "inline",
+          "Content-Disposition": "attachment",
         },
       });
     } catch (err: any) {
@@ -517,7 +517,7 @@ class S3CompatibleStorageService implements IStorageService {
       status: res.status,
       headers: {
         "Content-Type": res.headers.get("Content-Type") || "application/pdf",
-        "Content-Disposition": "inline",
+        "Content-Disposition": "attachment",
       },
     });
   }

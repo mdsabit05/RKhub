@@ -1,5 +1,5 @@
 import React from "react";
-import { ExternalLink, Send, Sparkles } from "lucide-react";
+import { Download, ExternalLink, Send, Sparkles } from "lucide-react";
 import { API_URL } from "../api";
 
 export function AiComposer({ prompt, setPrompt, notice, submit, go, aiResult }) {
@@ -66,15 +66,18 @@ export function AiComposer({ prompt, setPrompt, notice, submit, go, aiResult }) 
                   <a
                     className="primary-action"
                     href={
-                      aiResult.resource.fileUrl.startsWith("/")
-                        ? `${API_URL}${aiResult.resource.fileUrl}`
-                        : aiResult.resource.fileUrl
+                      aiResult.resource.id
+                        ? `${API_URL}/api/resources/${aiResult.resource.id}/file`
+                        : aiResult.resource.fileUrl.startsWith("/")
+                          ? `${API_URL}${aiResult.resource.fileUrl}`
+                          : aiResult.resource.fileUrl
                     }
+                    download={aiResult.resource.title ? `${aiResult.resource.title}.pdf` : true}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <ExternalLink size={17} />
-                    Open PDF
+                    <Download size={17} />
+                    Download PDF
                   </a>
                 )}
                 {aiResult.resource.externalUrl && (

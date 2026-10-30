@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Database,
+  Download,
   ExternalLink,
   FileCheck,
   FileText,
@@ -1234,6 +1235,7 @@ export function AdminPage({ go }) {
                               href={item.fileUrl?.startsWith("/") ? `${API_URL}${item.fileUrl}` : `${API_URL}/api/resources/${item.id}/file`}
                               target="_blank"
                               rel="noopener noreferrer"
+                              download={item.title ? `${item.title}.pdf` : true}
                               className="secondary-action"
                               style={{
                                 minHeight: 36,
@@ -1245,8 +1247,8 @@ export function AdminPage({ go }) {
                                 textDecoration: "none",
                               }}
                             >
-                              <ExternalLink size={13} />
-                              <span>View PDF</span>
+                              <Download size={13} />
+                              <span>Download PDF</span>
                             </a>
                           )}
 

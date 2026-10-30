@@ -419,7 +419,7 @@ resources.get("/:id/file", async (c) => {
   }
 
   const rows = await query(
-    `SELECT file_url AS "fileUrl" FROM resources WHERE id = $1`,
+    `SELECT file_url AS "fileUrl", title FROM resources WHERE id = $1`,
     [id]
   );
 
@@ -428,12 +428,17 @@ resources.get("/:id/file", async (c) => {
   }
 
   const fileUrl = rows[0].fileUrl;
-  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
-    const signedUrl = await storageService.signUrl(fileUrl);
-    return c.redirect(signedUrl || fileUrl, 302);
-  }
+  const rawTitle = rows[0].title;
+  const safeFilename = `${(rawTitle || "document").replace(/[^a-zA-Z0-9._-]/g, "_")}.pdf`;
 
-  return storageService.proxyFile(fileUrl);
+  const response = await storageService.proxyFile(fileUrl);
+  return new Response(response.body, {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("Content-Type") || "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeFilename}"`,
+    },
+  });
 });
 
 resources.get("/:id", async (c) => {

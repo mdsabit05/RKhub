@@ -228,10 +228,7 @@ export function SyllabusList({ year, course, semester, onBack }) {
                         </td>
                         <td>
                           <div className="pdf-row-actions">
-                            <a className="action-btn action-view" href={url} target="_blank" rel="noreferrer" title="View PDF">
-                              <ExternalLink size={14} /><span>View</span>
-                            </a>
-                            <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download title="Download PDF">
+                            <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download={res.title ? `${res.title}.pdf` : true} title="Download PDF">
                               <Download size={14} /><span>Download</span>
                             </a>
                           </div>
@@ -262,10 +259,7 @@ export function SyllabusList({ year, course, semester, onBack }) {
                       </div>
                     </div>
                     <div className="pdf-card-mobile-actions">
-                      <a className="action-btn action-view" href={url} target="_blank" rel="noreferrer">
-                        <ExternalLink size={14} /><span>View</span>
-                      </a>
-                      <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download>
+                      <a className="action-btn action-download" href={url} target="_blank" rel="noreferrer" download={res.title ? `${res.title}.pdf` : true}>
                         <Download size={14} /><span>Download</span>
                       </a>
                     </div>

@@ -414,22 +414,11 @@ export function ResourcePdfList({
                         <td>
                           <div className="pdf-row-actions">
                             <a
-                              className="action-btn action-view"
-                              href={url}
-                              target="_blank"
-                              rel="noreferrer"
-                              title="View PDF in browser"
-                            >
-                              <ExternalLink size={14} />
-                              <span>View</span>
-                            </a>
-
-                            <a
                               className="action-btn action-download"
                               href={url}
                               target="_blank"
                               rel="noreferrer"
-                              download
+                              download={res.title ? `${res.title}.pdf` : true}
                               title="Download PDF file"
                             >
                               <Download size={14} />
@@ -494,21 +483,11 @@ export function ResourcePdfList({
 
                     <div className="pdf-card-mobile-actions">
                       <a
-                        className="action-btn action-view"
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <ExternalLink size={14} />
-                        <span>View</span>
-                      </a>
-
-                      <a
                         className="action-btn action-download"
                         href={url}
                         target="_blank"
                         rel="noreferrer"
-                        download
+                        download={res.title ? `${res.title}.pdf` : true}
                       >
                         <Download size={14} />
                         <span>Download</span>
